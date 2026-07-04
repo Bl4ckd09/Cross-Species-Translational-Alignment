@@ -49,6 +49,51 @@ stress), `SR-ATAD5` (genotoxicity), `SR-HSE` (heat-shock/proteotoxic),
 *rat in vivo*. Treat Tox21 as an orthogonal mechanism **prior**, not as ground
 truth about the rat.
 
+## Results — does gene expression add to structure?
+
+Controlled comparison on the **177** cohort compounds that have DrugMatrix rat-liver expression
+(single-source v1), predicting the 12 Tox21 endpoints as a multi-task problem with masked labels.
+Every arm is identical except the feature block, so the contrast isolates *"does gene expression
+add?"*. **Leakage-safe** protocol: repeated stratified 5-fold × 10 (50 splits, pooled out-of-fold);
+every transform (PCA, scalers) fit on the training fold only. Full table:
+[`data/results/results_table.csv`](data/results/results_table.csv).
+
+| Arm | Features | Macro ROC-AUC | Macro AUPRC |
+|---|---|---|---|
+| Structure only (baseline) | ECFP4-2048 → PCA-128 | 0.757 | 0.538 |
+| Expression only (ablation) | logFC → PCA-100 | 0.679 | 0.374 |
+| **Fusion (structure + expression)** | **[struct-128, GE-100]** | **0.766** | **0.548** |
+
+**Headline: fusion beats structure by ΔAUC +0.009 macro — but the gain is not uniform.** It
+concentrates in the **stress-response (SR)** assays (and PPAR-γ / ER), and is neutral-to-negative on
+the receptor-**binding** endpoints where structure already saturates:
+
+| Assay | Structure AUC | Fusion AUC | ΔAUC | Fusion wins |
+|---|---|---|---|---|
+| SR-p53 | 0.700 | 0.749 | **+0.048** | 100% |
+| NR-PPAR-γ | 0.764 | 0.812 | **+0.048** | 90% |
+| SR-MMP | 0.778 | 0.819 | **+0.042** | 80% |
+| NR-ER | 0.641 | 0.667 | +0.027 | 90% |
+| SR-ARE | 0.635 | 0.652 | +0.017 | 90% |
+| SR-HSE | 0.538 | 0.551 | +0.013 | 60% |
+| SR-ATAD5 | 0.829 | 0.834 | +0.005 | 40% |
+| NR-AhR | 0.819 | 0.813 | −0.006 | 30% |
+| NR-AR | 0.795 | 0.785 | −0.010 | 50% |
+| NR-AR-LBD | 0.899 | 0.881 | −0.017 | 10% |
+| NR-Aromatase | 0.760 | 0.733 | −0.027 | 20% |
+| NR-ER-LBD | 0.921 | 0.894 | −0.028 | 10% |
+
+**The SR>NR pattern.** Rat-liver transcriptional response adds most where the toxic mechanism is a
+*cellular stress program* — oxidative stress (SR-ARE), DNA damage (SR-p53), mitochondrial/heat-shock
+(SR-MMP/HSE) — signals a static structure fingerprint can't see. It adds little on *ligand-binding*
+endpoints (ER/AR-LBD, aromatase) that structure already determines well. That mechanism-split is the
+main scientific takeaway.
+
+**Caveats — this is a first-pass signal, not the final number:**
+- **Single source, 177 / 613 compounds** — DrugMatrix liver only; TG-GATEs not yet fused (would raise coverage and enable the cross-source ComBat validation on the 112 shared compounds).
+- **Structure baseline = ECFP4 + logistic regression**, not the planned frozen-ChemBERT + MLP head. ECFP4 is a strong Tox21 baseline, but a stronger structure arm could shrink the apparent expression gain, so the magnitude is provisional.
+- No batch correction is applied (unnecessary for a single platform).
+
 ## Files
 
 Data:
