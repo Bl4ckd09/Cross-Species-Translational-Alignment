@@ -30,7 +30,7 @@ Adaptations: ECFP4 not ChemBERT; frozen Tox21 model trained on the 256 (where ex
 import os, re, sys
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, KFold
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -77,17 +77,36 @@ def cv_eval(blocks, y):
 def ci(x): return 1.96 * x.std(ddof=1) / np.sqrt(len(x))
 def row(name, n, a, p): return (name, n, round(a.mean(), 3), round(ci(a), 3), round(p.mean(), 3), round(ci(p), 3))
 
-def frozen_tox21_predict(GEc, STc, Ytox):
-    """Frozen Tox21 model: per-assay balanced logistic on all-256 [struct-PCA ⊕ expr-PCA];
-    return in-sample 12-D probs (the deployed frozen model's output)."""
-    Zs = PCA(min(CFG["n_pca_struct"], min(STc.shape) - 1)).fit_transform(StandardScaler().fit_transform(STc))
-    Zg = PCA(min(CFG["n_pca_expr"], min(GEc.shape) - 1)).fit_transform(StandardScaler().fit_transform(GEc))
-    F = StandardScaler().fit_transform(np.hstack([Zs, Zg]))
-    P = np.full((len(F), len(ASSAYS)), np.nan)
+def _tox_features(STtr, GEtr, STte, GEte):
+    """struct-PCA ⊕ expr-PCA, all fit on the train rows only. Returns (F_train, F_test)."""
+    ss = StandardScaler().fit(STtr); ps = PCA(min(CFG["n_pca_struct"], min(STtr.shape) - 1)).fit(ss.transform(STtr))
+    gs = StandardScaler().fit(GEtr); pg = PCA(min(CFG["n_pca_expr"], min(GEtr.shape) - 1)).fit(gs.transform(GEtr))
+    Ftr = np.hstack([ps.transform(ss.transform(STtr)), pg.transform(gs.transform(GEtr))])
+    Fte = np.hstack([ps.transform(ss.transform(STte)), pg.transform(gs.transform(GEte))])
+    f2 = StandardScaler().fit(Ftr)
+    return f2.transform(Ftr), f2.transform(Fte)
+
+def _fit_predict_tox(Ftr, Ytr, Fte):
+    P = np.full((len(Fte), len(ASSAYS)), np.nan)
     for j in range(len(ASSAYS)):
-        yj = Ytox[:, j]; m = ~np.isnan(yj)
+        yj = Ytr[:, j]; m = ~np.isnan(yj)
         if yj[m].sum() >= 2 and (1 - yj[m]).sum() >= 2:
-            P[:, j] = LogisticRegression(max_iter=3000, class_weight="balanced").fit(F[m], yj[m].astype(int)).predict_proba(F)[:, 1]
+            P[:, j] = LogisticRegression(max_iter=3000, class_weight="balanced").fit(Ftr[m], yj[m].astype(int)).predict_proba(Fte)[:, 1]
+    return P
+
+def frozen_tox21_predict(GEc, STc, Ytox):
+    """In-sample: Tox21 model trained on ALL rows, predicts those same rows (deployed frozen
+    model's output — but optimistic: a compound's own Tox21 label informed its prediction)."""
+    F, _ = _tox_features(STc, GEc, STc, GEc)
+    return _fit_predict_tox(F, Ytox, F)
+
+def crossfit_tox21_predict(GEc, STc, Ytox, folds=5, seed=7):
+    """Out-of-fold: each compound's 12-D Tox21 prediction comes from a model trained on the OTHER
+    folds only — removes the in-sample optimism (proper cross-fitting / stacking)."""
+    n = len(STc); P = np.full((n, len(ASSAYS)), np.nan)
+    for tr, te in KFold(folds, shuffle=True, random_state=seed).split(np.zeros(n)):
+        Ftr, Fte = _tox_features(STc[tr], GEc[tr], STc[te], GEc[te])
+        P[te] = _fit_predict_tox(Ftr, Ytox[tr], Fte)
     return P
 
 def main():
@@ -109,7 +128,9 @@ def main():
     ST256 = featurize(list(comb.index), kind="ecfp4").loc[comb.index].values.astype("float32")
     Ytox256 = tox.loc[comb.index, ASSAYS].apply(pd.to_numeric, errors="coerce").values
     predD = pd.DataFrame(frozen_tox21_predict(comb.values.astype("float32"), ST256, Ytox256),
-                         index=comb.index, columns=ASSAYS)
+                         index=comb.index, columns=ASSAYS)                        # in-sample (optimistic)
+    predCF = pd.DataFrame(crossfit_tox21_predict(comb.values.astype("float32"), ST256, Ytox256),
+                          index=comb.index, columns=ASSAYS)                       # out-of-fold (rigorous)
 
     conns = list(dili.conn); y = dili.set_index("conn")["dili"].loc[conns].values
     prev = y.mean()
@@ -132,7 +153,8 @@ def main():
     R.append(row("  B1 structure @135",   len(ye), *cv_eval([(STe, CFG["n_pca_struct"])], ye)))
     R.append(row("  B2 measuredTox21 @135", len(ye), *cv_eval([(toxe, None)], ye)))
     R.append(row("  B3 rawExpression @135", len(ye), *cv_eval([(GEe, CFG["n_pca_expr"])], ye)))
-    R.append(row("  A  predTox21 @135",    len(ye), *cv_eval([(predD.loc[ce].values, None)], ye)))
+    R.append(row("  A  predTox21 in-sample @135", len(ye), *cv_eval([(np.nan_to_num(predD.loc[ce].values, nan=0.5), None)], ye)))
+    R.append(row("  A  predTox21 cross-fit @135", len(ye), *cv_eval([(np.nan_to_num(predCF.loc[ce].values, nan=0.5), None)], ye)))
     R.append(row("  B  fusedRep @135",     len(ye), *cv_eval([(STe, CFG["n_pca_struct"]), (GEe, CFG["n_pca_expr"])], ye)))
 
     tab = pd.DataFrame(R, columns=["model", "N", "AUC", "AUC_ci", "AUPRC", "AUPRC_ci"])
@@ -142,10 +164,11 @@ def main():
           f"(prevalence {prev:.3f}; structure bar to clear ~0.75-0.83)")
     print(tab.to_string(index=False))
     print("\nread: Baseline2 measuredTox21≈0.52-0.59 -> reproduces published near-random Tox21->DILI (sanity OK);"
-          "\n      structure is best; Approach A/B (expression, fused) do NOT beat structure -> the model's"
-          "\n      representation adds no DILI signal over structure; raw expression≈0.52 (chance)."
-          "\n      caveats: our structure 0.66-0.70 is below published SOTA 0.75-0.83 (weak ECFP+logistic,"
-          "\n      small imbalanced N=135, 82% pos); A's in-sample Tox21 preds are optimistic yet still lose.")
+          "\n      structure (0.70) is the ONLY real DILI signal; expression/fused/Tox21 all ≈chance."
+          "\n      RIGOR: Approach A in-sample 0.646 was pure leakage -> cross-fit (out-of-fold Tox21"
+          "\n      preds) collapses it to 0.525 ≈ chance. So the chained pipeline carries NO DILI signal."
+          "\n      caveat: our structure 0.66-0.70 is below published SOTA 0.75-0.83 (weak ECFP+logistic,"
+          "\n      small imbalanced N=135, 82% pos).")
 
 if __name__ == "__main__":
     main()

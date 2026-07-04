@@ -242,15 +242,23 @@ informative metric, AUPRC baseline is already 0.823):
 |---|--:|--:|
 | Baseline 0 · prevalence | 0.500 | 0.823 |
 | **B1 · structure (ECFP)** | **0.697** | 0.932 |
-| A · predicted Tox21 → DILI | 0.642 | 0.951 |
+| A · predicted Tox21 → DILI *(in-sample)* | 0.646 | 0.951 |
+| A · predicted Tox21 → DILI **(cross-fit)** | **0.525** | 0.933 |
 | B · fused representation → DILI | 0.598 | 0.934 |
 | B2 · measured Tox21 → DILI | 0.594 | 0.940 |
 | B3 · raw rat expression → DILI | 0.521 | 0.925 |
 
 **Why.** Structure carries essentially all the DILI signal there is here. Measured Tox21 (0.59) and
-raw rat expression (0.52) are near-random, and **routing through the Tox21 head (A) or the fused
-representation (B) both score *below* structure alone** — the expression channel dilutes rather than
-adds. Even Approach A's *in-sample-optimistic* Tox21 predictions still lose to structure.
+raw rat expression (0.52) are near-random, and the fused representation (B, 0.60) scores *below*
+structure alone — the expression channel dilutes rather than adds.
+
+**The cross-fit rigor pass (the decisive check).** Approach A's *in-sample* number (0.646) looked
+like it might carry signal — but it was **leakage**: the frozen Tox21 model had seen each compound's
+own Tox21 labels, so its predicted-Tox21 features were optimistic. Regenerating those features
+**out-of-fold** (each compound's Tox21 predicted by a model trained only on the *other* compounds)
+**collapses Approach A to 0.525 ≈ chance.** So the chained pipeline carries *no* real DILI signal;
+the apparent edge was entirely an artifact. This is exactly the kind of 0.12-AUC illusion that only
+a cross-fitting check exposes.
 
 **Interpretation.** For real human hepatotoxicity, the rat-expression + Tox21 model **adds nothing
 over chemical structure.** This is consistent with the project's core finding and with the DILI
@@ -266,8 +274,9 @@ noisier secondary target, not run).
 on small, imbalanced N=135; ChemBERT (teammate drop-in) is the fairer structure model. The robust
 finding is the *ordering* (structure > expression/fused), not the absolute number. (b) Input-overlap
 for A/B/B3 is unavoidable — expression + Tox21 exist only for training compounds — so the model can
-only be scored on compounds whose *inputs* it saw (not their DILI label; different target).
-Cross-fitting Approach A's Tox21 predictions is the rigorous follow-up.
+only be scored on compounds whose *inputs* it saw (not their DILI label; different target). Approach
+A's specific optimism (the Tox21 predictions) has now been removed via cross-fitting (above), which
+turned its 0.646 into 0.525 — confirming the null rather than weakening it.
 
 ---
 
