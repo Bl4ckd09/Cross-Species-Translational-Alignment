@@ -25,4 +25,5 @@ data/_raw/
 *.npz
 *.feather
 *.pkl
+*.tsv
 **/_raw/
