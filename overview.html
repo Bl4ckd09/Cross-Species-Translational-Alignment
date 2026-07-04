@@ -106,6 +106,22 @@
   .method-note p{font-size:.9rem;color:var(--muted);margin:.45rem 0 0;max-width:none}
   .method-note b{color:var(--ink)}
   .method-note code{font-family:var(--mono);font-size:.82em;background:var(--surface-2);padding:.05rem .3rem;border-radius:4px}
+  .methods{margin-top:1.7rem;border-top:1px solid var(--line);padding-top:1.6rem}
+  .methods .m-sub{color:var(--muted);max-width:72ch;margin:.5rem 0 1.2rem;font-size:1.02rem}
+  .methods .m-sub b{color:var(--ink)}
+  .m-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  .mcard{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:1rem 1.15rem}
+  .mcard h4{font-family:var(--serif);font-size:1.04rem;margin:0 0 .4rem;letter-spacing:0}
+  .mcard h4 .mk{font-family:var(--mono);font-size:.64rem;font-weight:600;letter-spacing:.04em;
+    padding:.12rem .4rem;border-radius:5px;vertical-align:middle;margin-right:.5rem;text-transform:uppercase}
+  .mcard p{font-size:.88rem;color:var(--muted);margin:0;max-width:none}
+  .mcard p + p{margin-top:.5rem}
+  .mcard code{font-family:var(--mono);font-size:.82em;background:var(--surface-2);padding:.05rem .3rem;border-radius:4px}
+  .m-flow{margin-top:1.1rem;background:var(--sunken);border:1px solid var(--line);border-radius:10px;
+    padding:1.1rem 1.3rem;overflow-x:auto;font-family:var(--mono);font-size:.8rem;line-height:1.8;
+    color:var(--ink);white-space:pre;font-variant-numeric:tabular-nums}
+  .m-flow .cm{color:var(--faint)} .m-flow .st{color:var(--teal-ink)} .m-flow .ex{color:var(--purple-ink)}
+  .m-flow .op{color:var(--muted)}
 
   .assaywrap{margin-top:1.6rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem}
   .panel{border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.2rem;background:var(--surface)}
@@ -221,7 +237,7 @@
 
   @media (max-width:760px){
     .glance,.lims,.ladder{grid-template-columns:1fr 1fr}
-    .grid3,.assaywrap,.triptych{grid-template-columns:1fr}
+    .grid3,.assaywrap,.triptych,.m-grid{grid-template-columns:1fr}
     .bar{grid-template-columns:5rem 1fr}
     .rrow{grid-template-columns:8rem 1fr 2.6rem}
     .arc .a{grid-template-columns:1fr}
@@ -355,14 +371,49 @@
       Every data-dependent transform — PCA, scalers, ComBat, the frozen Tox21 head — is fit inside the
       training fold only. Repeated stratified cross-validation; fixed seeds; splits persisted.</div>
 
-    <div class="method-note">
-      <span class="eyebrow" style="color:var(--purple-ink)">Modeling choices</span>
-      <p><b>Encoder:</b> ECFP4 fingerprints (frozen ChemBERT also tested — see R5). <b>Head:</b> a
-        <b>per-assay L2 logistic regression</b>, class-balanced, masked to measured labels — chosen over an
-        MLP because at <code>N ≈ 140</code> per fold a flexible model overfits. That isn't a guess: the
-        gradient-boosted Baseline 2 <em>demonstrates</em> it (structure <code>0.733 &lt; 0.757</code>). A joint
-        masked-multitask MLP — the one thing linear heads can't do, letting sparse assays borrow strength —
-        is a documented swap-in for a torch-capable machine, not a rejected idea.</p>
+    <div class="methods">
+      <span class="eyebrow" style="color:var(--purple-ink)">How the models actually work</span>
+      <p class="m-sub">The plan named a "masked multitask MLP head." What actually ran is simpler, more
+        honest at this sample size, and fully interpretable — <b>no neural net was trained.</b></p>
+
+      <div class="m-flow"><span class="cm">// features → prediction (all transforms fit in the train fold only)</span>
+SMILES           <span class="op">──►</span> <span class="st">ECFP4 · 2048-bit</span>  <span class="op">──►</span> <span class="st">PCA·128</span> <span class="op">─┐</span>
+                                        <span class="op">├─</span> z-score <span class="op">─►</span> concat <span class="op">─►</span> <span class="ex">Logistic × 12</span>
+logFC · 31k probes <span class="op">──►</span> <span class="ex">PCA·100</span> <span class="op">──────────────►</span> <span class="op">─┘</span>              <span class="cm">(one per assay, masked)</span></div>
+
+      <div class="m-grid" style="margin-top:1.1rem">
+        <div class="mcard">
+          <h4><span class="mk" style="background:var(--purple-wash);color:var(--purple-ink)">01</span>Not one model — twelve</h4>
+          <p>One independent classifier <em>per Tox21 assay</em>, each trained only on the compounds where that
+            assay was measured. Tox21's sparse labels are handled by <em>subsetting</em>, not a masked loss —
+            same guarantee, no network needed.</p>
+          <p>The cost: no parameter sharing. A sparse assay (NR-PPARγ, 12 actives) can't borrow strength from a
+            dense one (SR-ARE, 99) — which is the <em>entire</em> theoretical case for the MLP.</p>
+        </div>
+        <div class="mcard">
+          <h4><span class="mk" style="background:var(--teal-wash);color:var(--teal-ink)">02</span>A linear head, on purpose</h4>
+          <p><code>LogisticRegression · L2 · class-balanced</code>. At <code>N ≈ 140</code>/fold with ~228 features,
+            the regularised linear model is the stable choice, and balancing is what makes AUC — not accuracy —
+            the honest metric on a 5–27%-active problem.</p>
+          <p>It also keeps the science interpretable: "does expression add?" is just "do the GE components earn
+            nonzero weight beside structure?"</p>
+        </div>
+        <div class="mcard">
+          <h4><span class="mk" style="background:var(--null-wash);color:var(--null)">03</span>Why not the fancier models</h4>
+          <p>Gradient-boosted trees (Baseline 2) were the high-capacity test — and they <em>overfit</em>:
+            <code>0.733 &lt; 0.757</code>. Flexibility is a liability when data is scarce, which is the empirical
+            case against a neural net too.</p>
+          <p>The joint multitask MLP is <b style="color:var(--ink)">deferred, not rejected</b> — blocked by the
+            Intel-Mac torch stack, documented as a swap-in for a torch-capable machine.</p>
+        </div>
+        <div class="mcard">
+          <h4><span class="mk" style="background:var(--teal-wash);color:var(--teal-ink)">04</span>No leakage, anywhere</h4>
+          <p>Both scalers, both PCAs, ComBat, <em>and</em> the frozen Tox21 model feeding Validation B's Approach A
+            are fit inside the training fold only.</p>
+          <p>That discipline is exactly what made the Approach-A leakage <em>visible</em> — cross-fitting caught it
+            and collapsed a fake 0.646 to a real 0.465.</p>
+        </div>
+      </div>
     </div>
   </div>
 </section>
