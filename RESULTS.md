@@ -207,7 +207,71 @@ hard to scale — and it's a stronger scientific narrative than "we added data a
 
 ---
 
-## 9. Honest limitations
+## 9. Retrospective validation on real drugs — held-out Tox21 + human DILI
+
+Two **separate** tests with separate baselines (not conflated). A positive result on one implies
+nothing about the other.
+
+### 9.1 Validation A (measured Tox21 on novel compounds) — *infeasible by construction*
+
+**Result.** The intended held-out set — compounds with rat expression AND measured Tox21, *outside*
+the training set — is **≈empty**. Of 672 rat compounds, **613 carry Tox21 labels (that IS the
+supervised set)** and the other 59 have no Tox21 to score against.
+
+**Why.** Our supervised set is *defined as* (TG-GATEs ∪ DrugMatrix) ∩ Tox21, so every rat-expression
+compound with a Tox21 label is already in it. There is no external rat-expression-plus-Tox21 set.
+
+**Interpretation.** Validation A is already answered by the **out-of-fold cross-validation in §1**
+(`results_table.csv`) — every compound is predicted while held out. That *is* the held-out Tox21 test.
+
+### 9.2 Validation B (human clinical DILI, DILIrank) — *structure wins; expression adds nothing*
+
+**Setup.** DILIrank (FDA/NCTR; 982 usable drugs — 568 DILI-positive [vMost+vLess], 414 negative
+[vNo]; Ambiguous excluded). Overlap with the rat cohort = **282 compounds (232 pos / 50 neg — ~82%
+positive**, enriched for hepatotoxins as expected). Baseline ladder 0–3 + Approach A (predicted
+Tox21 → DILI) + Approach B (fused representation → DILI); leakage-safe repeated stratified CV.
+([`validation_b.csv`](data/results/validation_b.csv))
+
+**Sanity gate (passed).** Measured Tox21 → DILI = **0.523 ≈ chance** — reproduces the published
+near-random Tox21→DILI finding, confirming the overlap set is not a selection artifact.
+
+**Same-set head-to-head** (N=135, every model on identical compounds; 82% prevalence → AUC is the
+informative metric, AUPRC baseline is already 0.823):
+
+| Model | AUC | AUPRC |
+|---|--:|--:|
+| Baseline 0 · prevalence | 0.500 | 0.823 |
+| **B1 · structure (ECFP)** | **0.697** | 0.932 |
+| A · predicted Tox21 → DILI | 0.642 | 0.951 |
+| B · fused representation → DILI | 0.598 | 0.934 |
+| B2 · measured Tox21 → DILI | 0.594 | 0.940 |
+| B3 · raw rat expression → DILI | 0.521 | 0.925 |
+
+**Why.** Structure carries essentially all the DILI signal there is here. Measured Tox21 (0.59) and
+raw rat expression (0.52) are near-random, and **routing through the Tox21 head (A) or the fused
+representation (B) both score *below* structure alone** — the expression channel dilutes rather than
+adds. Even Approach A's *in-sample-optimistic* Tox21 predictions still lose to structure.
+
+**Interpretation.** For real human hepatotoxicity, the rat-expression + Tox21 model **adds nothing
+over chemical structure.** This is consistent with the project's core finding and with the DILI
+literature: the animal→human step is a genuine translation gap, and neither a human-cell-line assay
+panel (Tox21) nor a rat transcriptome closes it here.
+
+**Answers to the two discussion questions.** *Delta over human cell-line data?* — yes, but adverse to
+us: structure (0.70) beats human-cell-line Tox21 (0.59) by ~0.10 AUC, and our expression additions
+don't extend that. *Predict known withdrawals?* — not yet (a DrugBank/ChEMBL withdrawal label is the
+noisier secondary target, not run).
+
+**Caveats.** (a) Our structure arm (0.66–0.70) is **below published SOTA (0.75–0.83)** — ECFP4+logistic
+on small, imbalanced N=135; ChemBERT (teammate drop-in) is the fairer structure model. The robust
+finding is the *ordering* (structure > expression/fused), not the absolute number. (b) Input-overlap
+for A/B/B3 is unavoidable — expression + Tox21 exist only for training compounds — so the model can
+only be scored on compounds whose *inputs* it saw (not their DILI label; different target).
+Cross-fitting Approach A's Tox21 predictions is the rigorous follow-up.
+
+---
+
+## 10. Honest limitations
 
 - **Small N.** 177 (256 pooled). Sparse assays (NR-PPARγ: 16 actives) have wide intervals.
 - **Structure encoder is ECFP4, not ChemBERT.** ECFP is a strong, standard Tox21 baseline (harder to
@@ -221,7 +285,7 @@ hard to scale — and it's a stronger scientific narrative than "we added data a
 
 ---
 
-## 10. Reproducing
+## 11. Reproducing
 
 See [README → Reproducing](README.md#reproducing) and [DATA.md](DATA.md). Large matrices are not
 committed (size + redistribution terms); everything regenerates from the scripts + public downloads.

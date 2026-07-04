@@ -27,3 +27,6 @@ data/_raw/
 *.pkl
 *.tsv
 **/_raw/
+
+# Third-party raw label file (FDA DILIrank) — reproduce via scripts/validation_b.py header URL
+data/dili/
