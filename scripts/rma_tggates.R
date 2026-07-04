@@ -11,8 +11,9 @@ suppressMessages({
   library(affy)
 })
 
-cel_dir <- "data/_raw/tggates_cels"
-out     <- "data/expression/tggates_liver_rma.tsv"
+args    <- commandArgs(trailingOnly=TRUE)
+cel_dir <- if (length(args) >= 1) args[1] else "data/_raw/tggates_cels"
+out     <- if (length(args) >= 2) args[2] else "data/expression/tggates_liver_rma.tsv"
 cels <- list.files(cel_dir, pattern="\\.CEL$", full.names=TRUE, ignore.case=TRUE)
 cat("RMA on", length(cels), "CEL files ...\n")
 

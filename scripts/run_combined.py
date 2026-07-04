@@ -13,6 +13,11 @@ import pandas as pd
 import sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from run_experiment import evaluate, load, ASSAYS, CFG, RES
 
+# args: [combined_logfc.parquet] [combined_labels.csv] [out_csv]  (defaults = single-dose)
+SIGF = sys.argv[1] if len(sys.argv) > 1 else "combined_logfc.parquet"
+LABF = sys.argv[2] if len(sys.argv) > 2 else "combined_labels.csv"
+OUTCSV = sys.argv[3] if len(sys.argv) > 3 else "results_combined.csv"
+
 SR = ["SR-ARE", "SR-ATAD5", "SR-HSE", "SR-MMP", "SR-p53"]
 NR = ["NR-AR", "NR-AR-LBD", "NR-AhR", "NR-Aromatase", "NR-ER", "NR-ER-LBD", "NR-PPAR-gamma"]
 
@@ -24,7 +29,7 @@ def summ(rec):
 
 def main():
     from scipy.stats import mannwhitneyu
-    cfg256 = {**CFG, "signatures": "combined_logfc.parquet", "labels": "combined_labels.csv", "repeats": 10}
+    cfg256 = {**CFG, "signatures": SIGF, "labels": LABF, "repeats": 10}
     print("=== N=256 (combined, post-ComBat) ===")
     rec256, (conns, Y) = evaluate(cfg256, data=load(cfg256))
     s256 = summ(rec256)
@@ -39,7 +44,7 @@ def main():
                      "dAUC_177": round(s177["per_assay"][a], 4),
                      "dAUC_256": round(s256["per_assay"][a], 4),
                      "grew": s256["per_assay"][a] > s177["per_assay"][a]})
-    tab = pd.DataFrame(rows); tab.to_csv(os.path.join(RES, "results_combined.csv"), index=False)
+    tab = pd.DataFrame(rows); tab.to_csv(os.path.join(RES, OUTCSV), index=False)
 
     sr_v = np.array([s256["per_assay"][a] for a in SR]); nr_v = np.array([s256["per_assay"][a] for a in NR])
     U, p = mannwhitneyu(sr_v, nr_v, alternative="greater")

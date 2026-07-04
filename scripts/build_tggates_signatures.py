@@ -12,7 +12,7 @@ replicates = mean.
 Note: TG-GATEs controls are matched on timepoint (vehicle-specific matching not in the SDRF) —
 a documented approximation; ComBat + downstream PCA absorb residual baseline.
 """
-import os
+import os, sys
 import numpy as np
 import pandas as pd
 
@@ -20,10 +20,15 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXPR = os.path.join(ROOT, "data", "expression")
 SIG  = os.path.join(ROOT, "data", "signatures"); os.makedirs(SIG, exist_ok=True)
 
+# args: [rma_tsv] [targets_csv] [out_parquet]  (defaults = single-dose)
+RMA_TSV = sys.argv[1] if len(sys.argv) > 1 else os.path.join(EXPR, "tggates_liver_rma.tsv")
+TARGETS = sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, "data", "_raw", "tggates_targets.csv")
+OUT_PARQ = sys.argv[3] if len(sys.argv) > 3 else os.path.join(SIG, "tggates_liver_logfc.parquet")
+
 def build():
-    expr = pd.read_csv(os.path.join(EXPR, "tggates_liver_rma.tsv"), sep="\t", index_col=0)
+    expr = pd.read_csv(RMA_TSV, sep="\t", index_col=0)
     expr.columns = [c.strip() for c in expr.columns]
-    man = pd.read_csv(os.path.join(ROOT, "data", "_raw", "tggates_targets.csv"))
+    man = pd.read_csv(TARGETS)
     man["sample"] = man["cel"].str.replace(r"\.CEL$", "", regex=True, case=False).str.strip()
     man = man[man["sample"].isin(expr.columns)].copy()
     print(f"RMA matrix: {expr.shape[0]} probes x {expr.shape[1]} samples | manifest matched: {len(man)}")
@@ -48,8 +53,8 @@ def build():
 
     sig = pd.DataFrame(np.vstack(sigs), index=conns, columns=expr.index).astype("float32")
     sig.index.name = "connectivity"
-    sig.to_parquet(os.path.join(SIG, "tggates_liver_logfc.parquet"))
-    print(f"wrote tggates_liver_logfc.parquet: {sig.shape[0]} compounds x {sig.shape[1]} probes")
+    sig.to_parquet(OUT_PARQ)
+    print(f"wrote {os.path.basename(OUT_PARQ)}: {sig.shape[0]} compounds x {sig.shape[1]} probes")
     print(f"logFC range {np.nanmin(sig.values):.2f}..{np.nanmax(sig.values):.2f} "
           f"median|logFC| {np.nanmedian(np.abs(sig.values)):.3f}")
 

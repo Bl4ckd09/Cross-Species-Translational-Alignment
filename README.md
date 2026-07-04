@@ -75,18 +75,18 @@ expression only / fusion), **leakage-safe** — repeated stratified CV, every da
 |---|---|---|---|---|
 | First run | N=177, DrugMatrix liver, **logistic** head | +0.009 macro (0.766 vs 0.757) | **+0.025** | p=0.074 |
 | Baseline 2 | N=177, **GBM** head (chemprop stand-in) | **−0.010** macro | −0.016 | — |
-| Plan A | **N=256** (+TG-GATEs, ComBat-merged) | 0.752 macro (**−0.014 vs N=177**) | **+0.001** | p=0.38 |
+| Plan A | **N=256** (+TG-GATEs repeat-dose, ComBat) | 0.756 macro (**−0.010 vs N=177**) | **+0.013** | p=0.27 |
 
 At N=177 with a linear head, fusion adds a small benefit concentrated in the **stress-response (SR)**
 assays (SR-p53, SR-MMP, PPAR-γ) and neutral-to-negative on receptor-**binding** endpoints — an
 appealing "expression sees stress programs that structure can't" story. But that signal **reverses
-under a stronger nonlinear head** (Baseline 2, gradient-boosted trees) and **washes out when the
-second data source is added** (Plan A: SR ΔAUC +0.025 → +0.001; SR-vs-NR p=0.074 → 0.38; fusion macro
-0.766 → 0.752). The ComBat alignment itself worked — 79 TG-GATEs compounds merged cleanly onto the
+under a stronger nonlinear head** (Baseline 2, gradient-boosted trees) and **falls by half to non-significance when the
+second data source is added** (Plan A: SR ΔAUC +0.025 → +0.013; SR-vs-NR p=0.074 → 0.27; fusion macro
+0.766 → 0.756). The ComBat alignment itself worked — 79 TG-GATEs compounds merged cleanly onto the
 DrugMatrix reference — the *effect* just isn't robust.
 
 **Honest conclusion:** the apparent SR-specific gain was largely a **small-sample / single-source /
-linear-head artifact**. More data *and* a stronger classifier each remove it. That only becomes
+linear-head artifact**. A stronger classifier reverses it; adding a second source halves it to non-significance. That only becomes
 visible if you actually run the robustness checks — which is the point.
 
 Per-stage numbers:

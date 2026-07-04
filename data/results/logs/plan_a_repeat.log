@@ -1,0 +1,82 @@
+=== wait for repeat-dose CELs ===
+  [1] valid CELs=123 / 756
+  [2] valid CELs=144 / 756
+  [3] valid CELs=168 / 756
+  [4] valid CELs=193 / 756
+  [5] valid CELs=220 / 756
+  [6] valid CELs=250 / 756
+  [7] valid CELs=279 / 756
+  [8] valid CELs=309 / 756
+  [9] valid CELs=330 / 756
+  [10] valid CELs=349 / 756
+  [11] valid CELs=367 / 756
+  [12] valid CELs=385 / 756
+  [13] valid CELs=401 / 756
+  [14] valid CELs=420 / 756
+  [15] valid CELs=438 / 756
+  [16] valid CELs=457 / 756
+  [17] valid CELs=476 / 756
+  [18] valid CELs=493 / 756
+  [19] valid CELs=510 / 756
+  [20] valid CELs=534 / 756
+  [21] valid CELs=561 / 756
+  [22] valid CELs=579 / 756
+  [23] valid CELs=602 / 756
+  [24] valid CELs=622 / 756
+  [25] valid CELs=641 / 756
+  [26] valid CELs=662 / 756
+  [27] valid CELs=682 / 756
+  [28] valid CELs=695 / 756
+  [29] valid CELs=712 / 756
+  [30] valid CELs=734 / 756
+  [31] valid CELs=752 / 756
+ready
+=== [1/4] RMA repeat-dose ===
+Warning messages:
+1: replacing previous import ‘AnnotationDbi::tail’ by ‘utils::tail’ when loading ‘rat2302cdf’ 
+2: replacing previous import ‘AnnotationDbi::head’ by ‘utils::head’ when loading ‘rat2302cdf’ 
+RMA on 752 CEL files ...
+Background correcting
+Normalizing
+Calculating Expression
+wrote data/expression/tggates_repeat_rma.tsv : 31099 probes x 752 samples
+=== [2/4] repeat-dose signatures ===
+RMA matrix: 31099 probes x 752 samples | manifest matched: 752
+wrote tggates_repeat_logfc.parquet: 121 compounds x 31099 probes
+logFC range -7.22..9.30 median|logFC| 0.182
+=== [3/4] ComBat merge (repeat-dose) ===
+DrugMatrix (177, 31099) | TG-GATEs (121, 31099) | shared probes 31099
+overlap compounds (ComBat validation): 42 | new from TG-GATEs: 79
+
+ComBat validation (mean DM-vs-TG signature corr on 42 shared compounds):
+  before = +0.2522   after = +0.4439   (improved)
+
+wrote combined_repeat_logfc.parquet: 256 compounds x 31099 probes
+  DrugMatrix 177 + TG-GATEs-new 79 = 256
+  actives/assay: {'NR-AR': 30, 'NR-AR-LBD': 27, 'NR-AhR': 39, 'NR-Aromatase': 29, 'NR-ER': 49, 'NR-ER-LBD': 25, 'NR-PPAR-gamma': 16, 'SR-ARE': 58, 'SR-ATAD5': 19, 'SR-HSE': 22, 'SR-MMP': 47, 'SR-p53': 39}
+=== [4/4] combined N=256 repeat-dose experiment ===
+=== N=256 (combined, post-ComBat) ===
+--- N=177 (DrugMatrix only, reference) ---
+
+=== per-assay GE benefit: N=177 -> N=256 ===
+        assay panel  dAUC_177  dAUC_256  grew
+        NR-AR    NR   -0.0101    0.0042  True
+    NR-AR-LBD    NR   -0.0175    0.0386  True
+       NR-AhR    NR   -0.0058   -0.0256 False
+ NR-Aromatase    NR   -0.0266    0.0017  True
+        NR-ER    NR    0.0267    0.0051 False
+    NR-ER-LBD    NR   -0.0276   -0.0965 False
+NR-PPAR-gamma    NR    0.0481   -0.0074 False
+       SR-ARE    SR    0.0174    0.0017 False
+     SR-ATAD5    SR    0.0047    0.0350  True
+       SR-HSE    SR    0.0131   -0.0339 False
+       SR-MMP    SR    0.0416    0.0573  True
+       SR-p53    SR    0.0483    0.0034 False
+
+MACRO fusion AUC : 177=0.7659  ->  256=0.7562
+SR-panel dAUC    : 177=+0.0250  ->  256=+0.0127  (shrank)
+NR-panel dAUC    : 177=-0.0018  ->  256=-0.0114
+SR-vs-NR @256    : Mann-Whitney U=22.0, one-sided p=0.2652
+
+wrote /Users/sunhwang/Downloads/training_data/data/results/results_combined.csv
+=== REPEAT-DOSE TEST DONE ===

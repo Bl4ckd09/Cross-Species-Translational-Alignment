@@ -10,7 +10,7 @@ combat_merge.py — align TG-GATEs onto DrugMatrix (ComBat) and build the combin
 - Final signature per compound: DrugMatrix for the 177 it has; ComBat-corrected TG-GATEs for the
   new compounds. -> data/signatures/combined_logfc.parquet + combined_labels.csv
 """
-import os
+import os, sys
 import numpy as np
 import pandas as pd
 
@@ -19,12 +19,16 @@ SIG  = os.path.join(ROOT, "data", "signatures")
 ASSAYS = ["NR-AR","NR-AR-LBD","NR-AhR","NR-Aromatase","NR-ER","NR-ER-LBD","NR-PPAR-gamma",
           "SR-ARE","SR-ATAD5","SR-HSE","SR-MMP","SR-p53"]
 
+# args: [tg_parquet] [out_tag]   (defaults = single-dose -> combined_*)
+TG_PARQ = sys.argv[1] if len(sys.argv) > 1 else "tggates_liver_logfc.parquet"
+OUT_TAG = sys.argv[2] if len(sys.argv) > 2 else "combined"
+
 def mean_shared_corr(dm, tg, shared):
     return float(np.mean([np.corrcoef(dm.loc[c], tg.loc[c])[0, 1] for c in shared]))
 
 def main():
     dm = pd.read_parquet(os.path.join(SIG, "drugmatrix_liver_logfc.parquet"))
-    tg = pd.read_parquet(os.path.join(SIG, "tggates_liver_logfc.parquet"))
+    tg = pd.read_parquet(os.path.join(SIG, TG_PARQ))
     probes = dm.columns.intersection(tg.columns)
     dm, tg = dm[probes], tg[probes]
     print(f"DrugMatrix {dm.shape} | TG-GATEs {tg.shape} | shared probes {len(probes)}")
@@ -49,14 +53,14 @@ def main():
     # ---- combined signature: DM (unchanged) + corrected TG for NEW compounds ----
     combined = pd.concat([dm, tg_c.loc[new_tg]], axis=0).astype("float32")
     combined.index.name = "connectivity"
-    combined.to_parquet(os.path.join(SIG, "combined_logfc.parquet"))
+    combined.to_parquet(os.path.join(SIG, f"{OUT_TAG}_logfc.parquet"))
 
     coh = pd.read_csv(os.path.join(ROOT, "master_cohort.csv"), dtype=str).set_index("connectivity")
     labels = coh.loc[combined.index, ASSAYS]
-    labels.to_csv(os.path.join(SIG, "combined_labels.csv"))
+    labels.to_csv(os.path.join(SIG, f"{OUT_TAG}_labels.csv"))
     src = pd.Series(["DrugMatrix"] * len(dm) + ["TG-GATEs"] * len(new_tg), index=combined.index, name="source")
-    src.to_csv(os.path.join(SIG, "combined_source.csv"))
-    print(f"\nwrote combined_logfc.parquet: {combined.shape[0]} compounds x {combined.shape[1]} probes")
+    src.to_csv(os.path.join(SIG, f"{OUT_TAG}_source.csv"))
+    print(f"\nwrote {OUT_TAG}_logfc.parquet: {combined.shape[0]} compounds x {combined.shape[1]} probes")
     print(f"  DrugMatrix {len(dm)} + TG-GATEs-new {len(new_tg)} = {len(combined)}")
     print(f"  actives/assay:", {a: int((labels[a] == '1').sum()) for a in ASSAYS})
 
