@@ -235,48 +235,78 @@ Tox21 → DILI) + Approach B (fused representation → DILI); leakage-safe repea
 **Sanity gate (passed).** Measured Tox21 → DILI = **0.523 ≈ chance** — reproduces the published
 near-random Tox21→DILI finding, confirming the overlap set is not a selection artifact.
 
-**Same-set head-to-head** (N=135, every model on identical compounds; 82% prevalence → AUC is the
-informative metric, AUPRC baseline is already 0.823):
+**Same-set head-to-head** (N=134, every model on identical compounds; 82% prevalence → AUC is the
+informative metric, AUPRC baseline is already 0.825):
 
 | Model | AUC | AUPRC |
 |---|--:|--:|
-| Baseline 0 · prevalence | 0.500 | 0.823 |
-| **B1 · structure (ECFP)** | **0.697** | 0.932 |
-| A · predicted Tox21 → DILI *(in-sample)* | 0.646 | 0.951 |
-| A · predicted Tox21 → DILI **(cross-fit)** | **0.525** | 0.933 |
-| B · fused representation → DILI | 0.598 | 0.934 |
-| B2 · measured Tox21 → DILI | 0.594 | 0.940 |
-| B3 · raw rat expression → DILI | 0.521 | 0.925 |
+| Baseline 0 · prevalence | 0.500 | 0.825 |
+| **B1 · structure (ECFP)** | **0.699** | 0.935 |
+| A · predicted Tox21 → DILI *(in-sample)* | 0.607 | 0.949 |
+| A · predicted Tox21 → DILI **(cross-fit)** | **0.465** | 0.913 |
+| B · fused representation → DILI | 0.600 | 0.935 |
+| B2 · measured Tox21 → DILI | 0.550 | 0.939 |
+| B3 · raw rat expression → DILI | 0.516 | 0.923 |
 
 **Why.** Structure carries essentially all the DILI signal there is here. Measured Tox21 (0.59) and
 raw rat expression (0.52) are near-random, and the fused representation (B, 0.60) scores *below*
 structure alone — the expression channel dilutes rather than adds.
 
-**The cross-fit rigor pass (the decisive check).** Approach A's *in-sample* number (0.646) looked
+**The cross-fit rigor pass (the decisive check).** Approach A's *in-sample* number (0.607) looked
 like it might carry signal — but it was **leakage**: the frozen Tox21 model had seen each compound's
 own Tox21 labels, so its predicted-Tox21 features were optimistic. Regenerating those features
 **out-of-fold** (each compound's Tox21 predicted by a model trained only on the *other* compounds)
-**collapses Approach A to 0.525 ≈ chance.** So the chained pipeline carries *no* real DILI signal;
-the apparent edge was entirely an artifact. This is exactly the kind of 0.12-AUC illusion that only
-a cross-fitting check exposes.
+**collapses Approach A to 0.465 ≈ chance.** So the chained pipeline carries *no* real DILI signal;
+the apparent edge was entirely an artifact — exactly the kind of illusion only a cross-fitting check
+exposes.
 
 **Interpretation.** For real human hepatotoxicity, the rat-expression + Tox21 model **adds nothing
 over chemical structure.** This is consistent with the project's core finding and with the DILI
 literature: the animal→human step is a genuine translation gap, and neither a human-cell-line assay
 panel (Tox21) nor a rat transcriptome closes it here.
 
-**Answers to the two discussion questions.** *Delta over human cell-line data?* — yes, but adverse to
-us: structure (0.70) beats human-cell-line Tox21 (0.59) by ~0.10 AUC, and our expression additions
-don't extend that. *Predict known withdrawals?* — not yet (a DrugBank/ChEMBL withdrawal label is the
-noisier secondary target, not run).
+**Answer to discussion question 1.** *Delta over human cell-line data?* — yes, but adverse to us:
+structure (0.70) beats human-cell-line Tox21 (0.55) by ~0.15 AUC, and our expression additions don't
+extend that.
 
-**Caveats.** (a) Our structure arm (0.66–0.70) is **below published SOTA (0.75–0.83)** — ECFP4+logistic
-on small, imbalanced N=135; ChemBERT (teammate drop-in) is the fairer structure model. The robust
+**Caveats.** (a) Our structure arm (0.65–0.70) is **below published SOTA (0.75–0.83)** — ECFP4+logistic
+on small, imbalanced N=134; ChemBERT (teammate drop-in) is the fairer structure model. The robust
 finding is the *ordering* (structure > expression/fused), not the absolute number. (b) Input-overlap
 for A/B/B3 is unavoidable — expression + Tox21 exist only for training compounds — so the model can
 only be scored on compounds whose *inputs* it saw (not their DILI label; different target). Approach
 A's specific optimism (the Tox21 predictions) has now been removed via cross-fitting (above), which
-turned its 0.646 into 0.525 — confirming the null rather than weakening it.
+turned 0.607 into 0.465 — confirming the null rather than weakening it.
+
+### 9.3 Validation B, secondary target — market withdrawal (ChEMBL) — *the pattern flips*
+
+**Setup.** A **separate, noisier** label (kept distinct from DILIrank, per plan): market-withdrawal
+status from ChEMBL `drug_warning`, matched by InChIKey connectivity. Overlap = **338 marketed drugs,
+only 35 withdrawn (10% prevalence)**. ([`validation_b_withdrawn.csv`](data/results/validation_b_withdrawn.csv);
+source: [`fetch_withdrawn.py`](scripts/fetch_withdrawn.py))
+
+**Result** (same-set N=150): **the ordering inverts vs DILIrank.**
+
+| Model | AUC | AUPRC (baseline 0.10) |
+|---|--:|--:|
+| B1 · structure (ECFP) | 0.557 | 0.191 |
+| B2 · measured Tox21 | 0.651 | 0.214 |
+| B3 · raw rat expression | 0.586 | 0.167 |
+| **A · predicted Tox21 (cross-fit)** | **0.704** | 0.251 |
+| B · fused representation | 0.565 | 0.188 |
+
+**Why / interpretation.** For "was this drug withdrawn from market," **structure is near-chance
+(0.56)** — withdrawal is driven by *in-vivo/clinical* effects, not molecular shape — and the
+**Tox21/expression-based features beat it** (measured Tox21 0.65; cross-fit predicted Tox21 0.70).
+Critically, the cross-fit Approach A does **not** collapse here (0.716 in-sample → 0.704 cross-fit),
+so unlike the DILI-concern target this is *not* a leakage artifact. Mechanistically plausible: the
+model's biological-activity representation captures withdrawal-relevant effects that static chemistry
+misses.
+
+**But treat this as suggestive, not conclusive.** Only **35 positives** (≈24 in the same-set), a
+**heterogeneous label** (drugs are withdrawn for efficacy/commercial reasons too, not only toxicity),
+and CIs that reflect CV-repeat spread rather than the tiny positive class. It is a genuine, honest
+*contrast* to the DILI result — different clinical outcome, different winner — and a lead worth
+following with a larger, tox-specific withdrawal set, not a headline claim.
 
 ---
 

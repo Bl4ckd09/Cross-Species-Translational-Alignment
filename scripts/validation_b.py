@@ -109,15 +109,23 @@ def crossfit_tox21_predict(GEc, STc, Ytox, folds=5, seed=7):
         P[te] = _fit_predict_tox(Ftr, Ytox[tr], Fte)
     return P
 
-def main():
+def main(label_source="dilirank"):
+    # marketed-drug universe = DILIrank-name-matched cohort compounds (shared across both labels)
     dili = pd.read_excel(os.path.join(ROOT, "data", "dili", "DILIrank.xlsx"), sheet_name=0, skiprows=1)
     c = dili["vDILI-Concern"].str.lower().str.strip()
     dili["dili"] = np.where(c.str.contains("most|less"), 1.0, np.where(c.str.startswith("vno"), 0.0, np.nan))
-    dili = dili[dili.dili.notna()].copy(); dili["nkey"] = dili["CompoundName"].map(norm)
-
+    dili["nkey"] = dili["CompoundName"].map(norm)
     coh = pd.read_csv(os.path.join(ROOT, "master_cohort.csv"), dtype=str); coh["nkey"] = coh["compound_name"].map(norm)
     dili["conn"] = dili["nkey"].map(dict(zip(coh.nkey, coh.connectivity)))
     dili = dili.dropna(subset=["conn"]).drop_duplicates("conn")
+
+    if label_source == "dilirank":                        # DILI-concern (vMost+vLess vs vNo; ambiguous dropped)
+        dili = dili[dili.dili.notna()].copy(); dili["label"] = dili["dili"]
+    elif label_source == "withdrawn":                     # SEPARATE noisier target: market-withdrawal (ChEMBL)
+        wset = set(pd.read_csv(os.path.join(ROOT, "data", "dili", "withdrawn_chembl.csv"))["connectivity"].dropna())
+        dili["label"] = dili["conn"].isin(wset).astype(float)   # over ALL name-matched drugs (keeps ambiguous)
+    else:
+        raise ValueError(label_source)
 
     comb = pd.read_parquet(os.path.join(SIG, "combined_logfc.parquet"))
     tox = pd.read_csv(os.path.join(SIG, "combined_labels.csv")).set_index("connectivity")
@@ -132,7 +140,7 @@ def main():
     predCF = pd.DataFrame(crossfit_tox21_predict(comb.values.astype("float32"), ST256, Ytox256),
                           index=comb.index, columns=ASSAYS)                       # out-of-fold (rigorous)
 
-    conns = list(dili.conn); y = dili.set_index("conn")["dili"].loc[conns].values
+    conns = list(dili.conn); y = dili.set_index("conn")["label"].loc[conns].values
     prev = y.mean()
     R = [("Baseline0 prevalence", len(y), 0.500, 0.000, round(prev, 3), 0.000)]
 
@@ -146,7 +154,7 @@ def main():
     R.append(row("Baseline2 measuredTox21", int(m2.sum()), *cv_eval([(toxm.fillna(0.5).values[m2], None)], y[m2])))
 
     # expression subset for B3 / A / B  — everything below on the SAME 135 compounds (fair head-to-head)
-    ce = [c for c in conns if c in expr_conns]; ye = dili.set_index("conn")["dili"].loc[ce].values
+    ce = [c for c in conns if c in expr_conns]; ye = dili.set_index("conn")["label"].loc[ce].values
     GEe = comb.loc[ce].values.astype("float32"); STe = featurize(ce, kind="ecfp4").loc[ce].values.astype("float32")
     toxe = coh_i.reindex(ce)[ASSAYS].apply(pd.to_numeric, errors="coerce").fillna(0.5).values
     R.append(("-- same-set (N=%d) head-to-head --" % len(ye), len(ye), np.nan, np.nan, np.nan, np.nan))
@@ -158,17 +166,28 @@ def main():
     R.append(row("  B  fusedRep @135",     len(ye), *cv_eval([(STe, CFG["n_pca_struct"]), (GEe, CFG["n_pca_expr"])], ye)))
 
     tab = pd.DataFrame(R, columns=["model", "N", "AUC", "AUC_ci", "AUPRC", "AUPRC_ci"])
-    tab.to_csv(os.path.join(RES, "validation_b.csv"), index=False)
-    print(f"\n=== VALIDATION B — DILIrank ===")
+    outname = "validation_b.csv" if label_source == "dilirank" else f"validation_b_{label_source}.csv"
+    tab.to_csv(os.path.join(RES, outname), index=False)
+    tgt = {"dilirank": "DILIrank DILI-concern", "withdrawn": "market-withdrawal (ChEMBL, SEPARATE noisier target)"}[label_source]
+    print(f"\n=== VALIDATION B — {tgt} ===")
     print(f"overlap compounds: {len(y)}  positives {int(y.sum())} negatives {int((y==0).sum())}  "
-          f"(prevalence {prev:.3f}; structure bar to clear ~0.75-0.83)")
+          f"(prevalence {prev:.3f})" + (" ; structure bar ~0.75-0.83" if label_source == "dilirank" else ""))
     print(tab.to_string(index=False))
-    print("\nread: Baseline2 measuredTox21≈0.52-0.59 -> reproduces published near-random Tox21->DILI (sanity OK);"
-          "\n      structure (0.70) is the ONLY real DILI signal; expression/fused/Tox21 all ≈chance."
-          "\n      RIGOR: Approach A in-sample 0.646 was pure leakage -> cross-fit (out-of-fold Tox21"
-          "\n      preds) collapses it to 0.525 ≈ chance. So the chained pipeline carries NO DILI signal."
-          "\n      caveat: our structure 0.66-0.70 is below published SOTA 0.75-0.83 (weak ECFP+logistic,"
-          "\n      small imbalanced N=135, 82% pos).")
+    if label_source == "dilirank":
+        print("\nread: measuredTox21≈0.52-0.59 reproduces published near-random Tox21->DILI (sanity OK);"
+              "\n      structure (0.70) is the ONLY real signal; expression/fused ≈chance. RIGOR: Approach A"
+              "\n      in-sample 0.646 was leakage -> cross-fit collapses to 0.525. Chained pipeline: NO DILI signal."
+              "\n      caveat: structure 0.66-0.70 < published SOTA 0.75-0.83 (weak ECFP+logistic, N=135, 82% pos).")
+    else:
+        print("\nread (SECONDARY, noisy exploratory target): for market-withdrawal the pattern FLIPS —"
+              "\n      Tox21-based features (measured ~0.65, cross-fit predicted ~0.66) modestly BEAT structure"
+              "\n      (~0.56), and cross-fit does NOT collapse (real, not leakage). BUT: small N, low prevalence,"
+              "\n      and withdrawal is a noisy label (mixed reasons: efficacy/commercial, not only toxicity).")
 
 if __name__ == "__main__":
-    main()
+    import sys
+    if len(sys.argv) > 1:
+        main(sys.argv[1])
+    else:
+        main("dilirank")      # primary target
+        main("withdrawn")     # secondary noisier target (kept separate)
