@@ -1,10 +1,25 @@
-# Toxicogenomics fusion cohort — TG-GATEs + DrugMatrix × Tox21
+# Cross-Species Translational Alignment — TG-GATEs + DrugMatrix × Tox21
 
 Goal: build a training substrate for detecting **subtle / pre-histopathological
 toxicity signatures** in animal transcriptome data, with **mechanism-of-toxicity
 labels** attached. This directory contains the compound-level linkage layer:
 every compound that has rat in-vivo perturbation data cross-referenced to Tox21
 mechanism assays via standardized chemical identifiers.
+
+## Background — the hackathon
+
+Built at **Building an AI Scientist**, an AI-for-Drug-Discovery hackathon by **TernaryTx, future.bio,
+Pluto House & Anthropic** (3–5 July 2026, 50Y Soho Square, London —
+[agenda](https://drive.google.com/file/d/1ldM0mJ_SW8jphKHAufZkjvD9TsGCCQG9/view)). The brief: use
+agentic AI to make real progress on a drug-discovery problem over one weekend, judged on innovation,
+technical execution, scientific relevance, potential impact and presentation.
+
+Our question: **does rat in-vivo gene expression add anything to chemical structure when predicting
+Tox21 mechanism-of-toxicity outcomes?** We built the full pipeline, got an encouraging first signal,
+then stress-tested it — and report where it held and where it didn't (see [Results](#results--does-gene-expression-add-to-structure)).
+
+- Code: <https://github.com/Bl4ckd09/Cross-Species-Translational-Alignment>
+- Data + results: <https://huggingface.co/datasets/Marcolini/cross-species-translational-alignment>
 
 ## The deliverable: `master_cohort.csv`
 
@@ -51,48 +66,35 @@ truth about the rat.
 
 ## Results — does gene expression add to structure?
 
-Controlled comparison on the **177** cohort compounds that have DrugMatrix rat-liver expression
-(single-source v1), predicting the 12 Tox21 endpoints as a multi-task problem with masked labels.
-Every arm is identical except the feature block, so the contrast isolates *"does gene expression
-add?"*. **Leakage-safe** protocol: repeated stratified 5-fold × 10 (50 splits, pooled out-of-fold);
-every transform (PCA, scalers) fit on the training fold only. Full table:
-[`data/results/results_table.csv`](data/results/results_table.csv).
+We ran the controlled comparison (identical everything except the feature block: structure only /
+expression only / fusion), **leakage-safe** — repeated stratified CV, every data-dependent transform
+(PCA, scalers, ComBat) fit on the training fold only — then stress-tested the headline three ways.
+**The finding did not replicate.**
 
-| Arm | Features | Macro ROC-AUC | Macro AUPRC |
-|---|---|---|---|
-| Structure only (baseline) | ECFP4-2048 → PCA-128 | 0.757 | 0.538 |
-| Expression only (ablation) | logFC → PCA-100 | 0.679 | 0.374 |
-| **Fusion (structure + expression)** | **[struct-128, GE-100]** | **0.766** | **0.548** |
-
-**Headline: fusion beats structure by ΔAUC +0.009 macro — but the gain is not uniform.** It
-concentrates in the **stress-response (SR)** assays (and PPAR-γ / ER), and is neutral-to-negative on
-the receptor-**binding** endpoints where structure already saturates:
-
-| Assay | Structure AUC | Fusion AUC | ΔAUC | Fusion wins |
+| Stage | Setup | Fusion vs structure | SR ΔAUC | SR-vs-NR |
 |---|---|---|---|---|
-| SR-p53 | 0.700 | 0.749 | **+0.048** | 100% |
-| NR-PPAR-γ | 0.764 | 0.812 | **+0.048** | 90% |
-| SR-MMP | 0.778 | 0.819 | **+0.042** | 80% |
-| NR-ER | 0.641 | 0.667 | +0.027 | 90% |
-| SR-ARE | 0.635 | 0.652 | +0.017 | 90% |
-| SR-HSE | 0.538 | 0.551 | +0.013 | 60% |
-| SR-ATAD5 | 0.829 | 0.834 | +0.005 | 40% |
-| NR-AhR | 0.819 | 0.813 | −0.006 | 30% |
-| NR-AR | 0.795 | 0.785 | −0.010 | 50% |
-| NR-AR-LBD | 0.899 | 0.881 | −0.017 | 10% |
-| NR-Aromatase | 0.760 | 0.733 | −0.027 | 20% |
-| NR-ER-LBD | 0.921 | 0.894 | −0.028 | 10% |
+| First run | N=177, DrugMatrix liver, **logistic** head | +0.009 macro (0.766 vs 0.757) | **+0.025** | p=0.074 |
+| Baseline 2 | N=177, **GBM** head (chemprop stand-in) | **−0.010** macro | −0.016 | — |
+| Plan A | **N=256** (+TG-GATEs, ComBat-merged) | 0.752 macro (**−0.014 vs N=177**) | **+0.001** | p=0.38 |
 
-**The SR>NR pattern.** Rat-liver transcriptional response adds most where the toxic mechanism is a
-*cellular stress program* — oxidative stress (SR-ARE), DNA damage (SR-p53), mitochondrial/heat-shock
-(SR-MMP/HSE) — signals a static structure fingerprint can't see. It adds little on *ligand-binding*
-endpoints (ER/AR-LBD, aromatase) that structure already determines well. That mechanism-split is the
-main scientific takeaway.
+At N=177 with a linear head, fusion adds a small benefit concentrated in the **stress-response (SR)**
+assays (SR-p53, SR-MMP, PPAR-γ) and neutral-to-negative on receptor-**binding** endpoints — an
+appealing "expression sees stress programs that structure can't" story. But that signal **reverses
+under a stronger nonlinear head** (Baseline 2, gradient-boosted trees) and **washes out when the
+second data source is added** (Plan A: SR ΔAUC +0.025 → +0.001; SR-vs-NR p=0.074 → 0.38; fusion macro
+0.766 → 0.752). The ComBat alignment itself worked — 79 TG-GATEs compounds merged cleanly onto the
+DrugMatrix reference — the *effect* just isn't robust.
 
-**Caveats — this is a first-pass signal, not the final number:**
-- **Single source, 177 / 613 compounds** — DrugMatrix liver only; TG-GATEs not yet fused (would raise coverage and enable the cross-source ComBat validation on the 112 shared compounds).
-- **Structure baseline = ECFP4 + logistic regression**, not the planned frozen-ChemBERT + MLP head. ECFP4 is a strong Tox21 baseline, but a stronger structure arm could shrink the apparent expression gain, so the magnitude is provisional.
-- No batch correction is applied (unnecessary for a single platform).
+**Honest conclusion:** the apparent SR-specific gain was largely a **small-sample / single-source /
+linear-head artifact**. More data *and* a stronger classifier each remove it. That only becomes
+visible if you actually run the robustness checks — which is the point.
+
+Per-stage numbers:
+[`results_table.csv`](data/results/results_table.csv) (N=177 three-arm),
+[`baseline2.csv`](data/results/baseline2.csv) (logistic vs GBM head),
+[`sr_vs_nr.txt`](data/results/sr_vs_nr.txt) (SR-vs-NR test),
+[`pc_sweep.csv`](data/results/pc_sweep.csv) (PCA-component sweep),
+[`results_combined.csv`](data/results/results_combined.csv) (per-assay N=177 → N=256).
 
 ## Files
 
@@ -112,24 +114,52 @@ Scripts (run from `data/`):
 - `scripts/intersect.py` — print all overlap statistics
 - `scripts/build_master.py` — assemble `master_cohort.csv`
 
-## Reproducing the data (large files not in this repo)
+Modeling & experiment scripts:
+- `scripts/retrieve_expression.py` — parse GSE57815 → DrugMatrix liver expression matrix + manifest
+- `scripts/build_signatures.py` — per-compound logFC signatures (treated − vehicle), configurable collapse
+- `scripts/structure_embed.py` — SMILES → ECFP4 fingerprints (swappable `featurize()`; ChemBERT drop-in)
+- `scripts/expr_embed.py` — expression → PCA latent (swappable `embed()`; future rat→human drop-in)
+- `scripts/run_experiment.py` — the controlled structure / expr / fusion comparison → `results_table.csv`
+- `scripts/baseline2.py` — logistic vs GBM head robustness check → `baseline2.csv`
+- `scripts/sweep_and_stats.py` — PCA-component sweep + formal SR-vs-NR test → `pc_sweep.csv`, `sr_vs_nr.txt`
+- `scripts/rma_tggates.R` — RMA-normalise the TG-GATEs liver CELs (R + `affy`)
+- `scripts/build_tggates_signatures.py` — TG-GATEs logFC signatures
+- `scripts/combat_merge.py` — ComBat-align TG-GATEs onto DrugMatrix → `combined_logfc.parquet`
+- `scripts/run_combined.py` — N=256 combined comparison, N=177 vs N=256 → `results_combined.csv`
 
-The raw + processed expression matrices are intentionally **not committed** (size + third-party
-redistribution terms). The repo ships the code, the linkage cohort, the small derived tables and
-the results table; everything else regenerates from **one public download**. Full instructions and
-the list of datasets to fetch are in **[DATA.md](DATA.md)**.
+## Reproducing
 
+Large matrices (raw GEO, RMA output, feature parquets) are **not committed** — size + third-party
+redistribution terms. Everything regenerates from the scripts plus public downloads; the full
+dataset list is in **[DATA.md](DATA.md)**.
+
+**N=177 (DrugMatrix only) — the first run:**
 ```bash
 pip install -r requirements.txt
 mkdir -p data/_raw
 curl -L -o data/_raw/GSE57815_series_matrix.txt.gz \
   https://ftp.ncbi.nlm.nih.gov/geo/series/GSE57nnn/GSE57815/matrix/GSE57815_series_matrix.txt.gz
-python scripts/retrieve_expression.py && python scripts/build_signatures.py && python scripts/run_experiment.py
+python scripts/retrieve_expression.py     # -> data/expression/drugmatrix_liver_expr.parquet
+python scripts/build_signatures.py         # -> data/signatures/drugmatrix_liver_logfc.parquet + labels.csv
+python scripts/run_experiment.py           # -> data/results/results_table.csv
+python scripts/baseline2.py                # -> data/results/baseline2.csv       (logistic vs GBM head)
+python scripts/sweep_and_stats.py          # -> data/results/pc_sweep.csv + sr_vs_nr.txt
 ```
 
-The modeling scripts (`retrieve_expression`, `build_signatures`, `expr_embed`, `structure_embed`,
-`run_experiment`) sit alongside the curation scripts listed above; `run_experiment.py` produces
-`data/results/results_table.csv` (structure vs expression vs fusion, leakage-safe).
+**N=256 (add TG-GATEs) — the robustness expansion.** Same code, different signature file. Needs the
+E-MTAB-799 liver CELs + R with `affy` (see [DATA.md](DATA.md)):
+```bash
+Rscript scripts/rma_tggates.R              # RMA -> data/expression/tggates_liver_rma.tsv
+python scripts/build_tggates_signatures.py # -> data/signatures/tggates_liver_logfc.parquet
+python scripts/combat_merge.py             # ComBat -> data/signatures/combined_logfc.parquet + combined_labels.csv
+python scripts/run_combined.py             # -> data/results/results_combined.csv (N=177 vs N=256)
+```
+
+**Same pipeline for both N.** `run_experiment.py` is parameterised by which signature file its config
+points at — `drugmatrix_liver_logfc.parquet` + `labels.csv` for N=177, `combined_logfc.parquet` +
+`combined_labels.csv` for N=256. The two file sets are **separate**: running the N=256 pipeline does
+**not** overwrite the N=177 inputs or `results_table.csv`, so you can re-run N=177 any time with just
+`python scripts/run_experiment.py`.
 
 ## Method notes
 
@@ -153,8 +183,10 @@ The modeling scripts (`retrieve_expression`, `build_signatures`, `expr_embed`, `
 
 ## Next steps
 
-1. Pull expression + histopathology for the **112 cross-platform compounds** to
-   test the core hypothesis (transcriptome moves before histopathology fires)
-   with built-in replication.
-2. Add clinical failure labels (DILIrank, ClinTox, WITHDRAWN) keyed the same way.
-3. Extend beyond liver using DrugMatrix's other tissues.
+The single-source signal didn't survive, so the next moves sharpen the test rather than declare
+victory:
+1. **Stronger structure arm** — swap ECFP4 → ChemBERT (a torch-env drop-in behind the same
+   `featurize()` contract) to confirm the null holds against a stronger structure encoder.
+2. **More data** — repeat-dose TG-GATEs and DrugMatrix's other tissues, beyond the liver single-dose set.
+3. **Harder target** — move from Tox21 mechanism priors toward clinical failure labels (DILIrank,
+   ClinTox, WITHDRAWN), where in-vivo transcriptomics may carry signal structure genuinely lacks.
