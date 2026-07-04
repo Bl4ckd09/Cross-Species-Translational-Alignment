@@ -1,0 +1,558 @@
+<title>Does the rat body predict human harm? — a cross-species toxicity field report</title>
+<style>
+  :root {
+    --ground:#f5f8f7; --surface:#ffffff; --surface-2:#eef3f1; --sunken:#e7eeeb;
+    --ink:#132420; --muted:#566a64; --faint:#7d8f89; --line:#d7e1dd; --line-strong:#c3d1cc;
+    --teal:#0e7c6b; --teal-ink:#0a5f52; --purple:#6144c9; --purple-ink:#4d36a6;
+    --caveat:#9a6a12; --null:#a8323f; --good:#2f7a55;
+    --teal-wash:#e2f0ec; --purple-wash:#ebe6fa; --caveat-wash:#f6ecd8; --null-wash:#f7e2e4;
+    --shadow:0 1px 2px rgba(19,36,32,.04), 0 6px 22px -12px rgba(19,36,32,.18);
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono","Cascadia Code",Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --ground:#0d1613; --surface:#122019; --surface-2:#16261f; --sunken:#0f1c16;
+      --ink:#e7efeb; --muted:#9db0aa; --faint:#748680; --line:#22352d; --line-strong:#2d4339;
+      --teal:#39c0a6; --teal-ink:#5fd3bc; --purple:#a78bff; --purple-ink:#bda6ff;
+      --caveat:#e0ad57; --null:#f0808f; --good:#67c795;
+      --teal-wash:#123029; --purple-wash:#1f1a3a; --caveat-wash:#2c2413; --null-wash:#2e1518;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px -14px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="light"]{
+    --ground:#f5f8f7; --surface:#ffffff; --surface-2:#eef3f1; --sunken:#e7eeeb;
+    --ink:#132420; --muted:#566a64; --faint:#7d8f89; --line:#d7e1dd; --line-strong:#c3d1cc;
+    --teal:#0e7c6b; --teal-ink:#0a5f52; --purple:#6144c9; --purple-ink:#4d36a6;
+    --caveat:#9a6a12; --null:#a8323f; --good:#2f7a55;
+    --teal-wash:#e2f0ec; --purple-wash:#ebe6fa; --caveat-wash:#f6ecd8; --null-wash:#f7e2e4;
+    --shadow:0 1px 2px rgba(19,36,32,.04), 0 6px 22px -12px rgba(19,36,32,.18);
+  }
+  :root[data-theme="dark"]{
+    --ground:#0d1613; --surface:#122019; --surface-2:#16261f; --sunken:#0f1c16;
+    --ink:#e7efeb; --muted:#9db0aa; --faint:#748680; --line:#22352d; --line-strong:#2d4339;
+    --teal:#39c0a6; --teal-ink:#5fd3bc; --purple:#a78bff; --purple-ink:#bda6ff;
+    --caveat:#e0ad57; --null:#f0808f; --good:#67c795;
+    --teal-wash:#123029; --purple-wash:#1f1a3a; --caveat-wash:#2c2413; --null-wash:#2e1518;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px -14px rgba(0,0,0,.6);
+  }
+
+  *{box-sizing:border-box}
+  body{background:var(--ground);color:var(--ink);font-family:var(--sans);
+    line-height:1.62;-webkit-font-smoothing:antialiased;margin:0;
+    font-size:clamp(1rem,.97rem + .15vw,1.06rem)}
+  .wrap{max-width:min(1080px,92vw);margin-inline:auto}
+  .col{max-width:66ch}
+  h1,h2,h3{font-family:var(--serif);font-weight:600;text-wrap:balance;line-height:1.12;letter-spacing:-.01em}
+  a{color:var(--teal-ink);text-decoration-thickness:1px;text-underline-offset:2px}
+  a:focus-visible,button:focus-visible{outline:2px solid var(--teal);outline-offset:3px;border-radius:3px}
+  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--teal-ink);font-weight:600}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* ---- hero ---- */
+  header.hero{padding:clamp(3rem,7vw,6rem) 0 clamp(2rem,4vw,3rem);
+    border-bottom:1px solid var(--line)}
+  .hero .kicker{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;color:var(--muted);
+    font-family:var(--mono);font-size:.74rem;letter-spacing:.04em;margin-bottom:1.4rem}
+  .hero .kicker b{color:var(--ink)}
+  .dot{width:4px;height:4px;border-radius:50%;background:var(--faint)}
+  h1{font-size:clamp(2.1rem,1.3rem + 3.6vw,3.7rem);margin:.2rem 0 0}
+  h1 .lift{color:var(--teal-ink)}
+  .thesis{font-size:clamp(1.12rem,1rem + .6vw,1.4rem);color:var(--muted);max-width:52ch;
+    margin:1.3rem 0 0;line-height:1.5}
+  .thesis b{color:var(--ink);font-weight:600}
+  .verdict-line{margin-top:2rem;padding:1.1rem 1.25rem;border:1px solid var(--line);border-radius:12px;
+    background:var(--surface);box-shadow:var(--shadow);display:flex;gap:1rem;align-items:baseline;flex-wrap:wrap}
+  .verdict-line .big{font-family:var(--serif);font-size:1.15rem;color:var(--ink)}
+  .links{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:1.6rem}
+  .btn{font-family:var(--mono);font-size:.8rem;padding:.5rem .85rem;border-radius:8px;
+    border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);text-decoration:none;
+    display:inline-flex;gap:.45rem;align-items:center;transition:border-color .15s,transform .15s}
+  .btn:hover{border-color:var(--teal);transform:translateY(-1px)}
+  .btn.p{background:var(--teal);color:#fff;border-color:var(--teal)}
+  :root[data-theme="dark"] .btn.p,@media (prefers-color-scheme:dark){.btn.p{color:#08120f}}
+
+  /* ---- glance ribbon ---- */
+  .glance{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:2.4rem}
+  .glance > div{background:var(--surface);padding:1.05rem 1.15rem}
+  .glance .q{font-size:.82rem;color:var(--muted);line-height:1.35;min-height:2.4em}
+  .glance .a{font-family:var(--serif);font-size:1.05rem;margin-top:.5rem;color:var(--ink)}
+  .glance .tag{font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase}
+
+  /* ---- sections ---- */
+  section{padding:clamp(2.6rem,5vw,4.2rem) 0;border-bottom:1px solid var(--line)}
+  .shead{display:flex;gap:.9rem;align-items:baseline;margin-bottom:1.6rem;flex-wrap:wrap}
+  .shead .n{font-family:var(--mono);font-size:.8rem;color:var(--teal-ink);font-weight:600;
+    border:1px solid var(--line-strong);border-radius:6px;padding:.15rem .5rem}
+  h2{font-size:clamp(1.5rem,1.1rem + 1.6vw,2.15rem);margin:0}
+  .lede{color:var(--muted);max-width:64ch;margin:.4rem 0 0;font-size:1.05rem}
+  p{max-width:66ch}
+
+  /* ---- data cards ---- */
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:1.2rem 1.25rem;box-shadow:var(--shadow)}
+  .stat .figure{font-family:var(--mono);font-size:clamp(1.8rem,1.3rem + 1.6vw,2.5rem);font-weight:600;
+    color:var(--ink);line-height:1;font-variant-numeric:tabular-nums}
+  .stat .figure.te{color:var(--teal-ink)} .stat .figure.pu{color:var(--purple-ink)}
+  .stat .cap{font-size:.86rem;color:var(--muted);margin-top:.55rem}
+  .stat .sub{font-family:var(--mono);font-size:.72rem;color:var(--faint);margin-top:.3rem;letter-spacing:.02em}
+
+  .assaywrap{margin-top:1.6rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  .panel{border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.2rem;background:var(--surface)}
+  .panel h4{margin:0 0 .2rem;font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;text-transform:uppercase}
+  .panel.nr h4{color:var(--teal-ink)} .panel.sr h4{color:var(--purple-ink)}
+  .panel .desc{font-size:.86rem;color:var(--muted);margin:.1rem 0 .7rem}
+  .chips{display:flex;flex-wrap:wrap;gap:.35rem}
+  .chip{font-family:var(--mono);font-size:.72rem;padding:.2rem .5rem;border-radius:6px;background:var(--surface-2);
+    border:1px solid var(--line);color:var(--ink)}
+  .panel.nr .chip{background:var(--teal-wash);border-color:transparent}
+  .panel.sr .chip{background:var(--purple-wash);border-color:transparent}
+
+  /* ---- pipeline flow ---- */
+  .flowscroll{overflow-x:auto;padding-bottom:.5rem}
+  .flow{display:flex;gap:0;min-width:760px;align-items:stretch}
+  .step{flex:1;background:var(--surface);border:1px solid var(--line);padding:.9rem 1rem;position:relative}
+  .step:first-child{border-radius:10px 0 0 10px} .step:last-child{border-radius:0 10px 10px 0}
+  .step + .step{border-left:none}
+  .step .k{font-family:var(--mono);font-size:.7rem;color:var(--teal-ink);letter-spacing:.06em}
+  .step .t{font-weight:600;font-size:.92rem;margin:.25rem 0 .2rem}
+  .step .d{font-size:.78rem;color:var(--muted);line-height:1.35}
+  .step::after{content:"→";position:absolute;right:-.62rem;top:50%;transform:translateY(-50%);
+    color:var(--faint);font-family:var(--mono);z-index:2;background:var(--ground);padding:0 .1rem}
+  .step:last-child::after{content:""}
+  .flownote{font-family:var(--mono);font-size:.76rem;color:var(--muted);margin-top:.9rem;
+    display:flex;gap:.5rem;align-items:center}
+  .flownote .lock{color:var(--teal-ink)}
+
+  /* ---- results ---- */
+  .part-label{font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--purple-ink);margin:2.4rem 0 1.1rem;display:flex;gap:.7rem;align-items:center}
+  .part-label::after{content:"";flex:1;height:1px;background:var(--line)}
+  .results{display:flex;flex-direction:column;gap:1rem}
+  .result{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:1.4rem 1.5rem;box-shadow:var(--shadow)}
+  .result-head{display:flex;gap:.7rem;align-items:center;margin-bottom:.55rem;flex-wrap:wrap}
+  .rtag{font-family:var(--mono);font-size:.74rem;font-weight:600;color:var(--muted);
+    border:1px solid var(--line-strong);border-radius:6px;padding:.1rem .45rem}
+  .result h3{font-size:1.2rem;margin:0}
+  .pill{font-family:var(--mono);font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;font-weight:600;
+    padding:.22rem .55rem;border-radius:20px;white-space:nowrap}
+  .pill.signal{background:var(--teal-wash);color:var(--teal-ink)}
+  .pill.bio{background:var(--purple-wash);color:var(--purple-ink)}
+  .pill.caveat{background:var(--caveat-wash);color:var(--caveat)}
+  .pill.null{background:var(--null-wash);color:var(--null)}
+  .result .lede{margin:.1rem 0 1rem;color:var(--ink);max-width:70ch}
+  .figures{display:flex;flex-wrap:wrap;gap:1.4rem;padding:.9rem 0;margin-bottom:.4rem;
+    border-block:1px solid var(--line)}
+  .fig{display:flex;flex-direction:column}
+  .fig .v{font-family:var(--mono);font-size:1.5rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
+  .fig .l{font-size:.74rem;color:var(--muted);margin-top:.35rem;max-width:16ch}
+  .fig.win .v{color:var(--teal-ink)} .fig.bio .v{color:var(--purple-ink)}
+  .fig.bad .v{color:var(--null)}
+  .why{font-size:.95rem;color:var(--muted);margin:.9rem 0 0;max-width:72ch}
+  .why b{color:var(--ink)}
+
+  /* mini diverging bar */
+  .bars{margin:.4rem 0 0;display:flex;flex-direction:column;gap:.4rem}
+  .bar{display:grid;grid-template-columns:6.5rem 1fr;gap:.7rem;align-items:center;font-size:.8rem}
+  .bar .name{font-family:var(--mono);text-align:right;color:var(--muted)}
+  .track{position:relative;height:16px;background:var(--sunken);border-radius:4px}
+  .track .zero{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--line-strong)}
+  .track .fill{position:absolute;top:2px;bottom:2px;border-radius:3px}
+  .track .fill.pos{left:50%;background:var(--purple)}
+  .track .fill.neg{right:50%;background:var(--teal)}
+  .track .val{position:absolute;top:50%;transform:translateY(-50%);font-family:var(--mono);
+    font-size:.68rem;color:var(--ink)}
+
+  /* comparability 3-point */
+  .triptych{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:1.2rem}
+  .triptych > div{background:var(--surface);padding:1.1rem 1.2rem;text-align:center}
+  .triptych .stage{font-family:var(--mono);font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .triptych .r{font-family:var(--mono);font-size:1.9rem;font-weight:600;color:var(--teal-ink);margin:.4rem 0 .1rem;font-variant-numeric:tabular-nums}
+  .triptych .sr{font-family:var(--mono);font-size:.82rem;color:var(--purple-ink)}
+  .triptych .cap{font-size:.75rem;color:var(--faint);margin-top:.4rem}
+
+  /* ranked bar (DILI) */
+  .rank{display:flex;flex-direction:column;gap:.5rem;margin-top:.4rem}
+  .rrow{display:grid;grid-template-columns:11rem 1fr 3rem;gap:.7rem;align-items:center;font-size:.84rem}
+  .rrow .rn{font-family:var(--mono);color:var(--muted);font-size:.78rem}
+  .rtrack{height:18px;background:var(--sunken);border-radius:4px;overflow:hidden;position:relative}
+  .rtrack i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;display:block}
+  .rrow .rv{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+  .rrow.best .rtrack i{background:var(--teal)} .rrow.best .rv{color:var(--teal-ink);font-weight:600}
+  .rrow.mid .rtrack i{background:var(--faint)}
+  .rrow.dead .rtrack i{background:var(--null);opacity:.55}
+
+  /* synthesis */
+  .arc{display:flex;flex-direction:column;gap:.1rem;margin:1.4rem 0}
+  .arc .a{display:grid;grid-template-columns:auto 1fr;gap:1rem;padding:.85rem 0;border-bottom:1px dashed var(--line)}
+  .arc .a:last-child{border-bottom:none}
+  .arc .q{font-family:var(--serif);font-size:1.05rem;color:var(--ink)}
+  .arc .r{font-size:.9rem;color:var(--muted);margin-top:.15rem}
+  .arc .mk{font-family:var(--mono);font-size:.7rem;padding:.3rem .5rem;border-radius:6px;height:fit-content;
+    white-space:nowrap;font-weight:600}
+  .arc .mk.n{background:var(--null-wash);color:var(--null)}
+  .arc .mk.y{background:var(--teal-wash);color:var(--teal-ink)}
+  .arc .mk.q2{background:var(--caveat-wash);color:var(--caveat)}
+  .kicker-quote{font-family:var(--serif);font-size:clamp(1.3rem,1rem + 1.4vw,1.9rem);line-height:1.35;
+    max-width:24ch;margin:1.2rem 0 0;color:var(--ink)}
+  .kicker-quote b{color:var(--teal-ink);font-style:italic}
+
+  /* limitations */
+  .lims{display:grid;grid-template-columns:repeat(2,1fr);gap:.8rem;margin-top:1.2rem}
+  .lim{border:1px solid var(--line);border-left:3px solid var(--caveat);border-radius:8px;padding:.85rem 1rem;background:var(--surface)}
+  .lim b{font-size:.92rem} .lim p{font-size:.85rem;color:var(--muted);margin:.25rem 0 0}
+
+  footer{padding:clamp(2.4rem,4vw,3.4rem) 0 4rem}
+  .foot-grid{display:flex;justify-content:space-between;gap:2rem;flex-wrap:wrap;align-items:flex-start}
+  .foot-grid p{font-size:.85rem;color:var(--muted);max-width:44ch}
+  .credit{font-family:var(--mono);font-size:.74rem;color:var(--faint);line-height:1.7}
+
+  @media (max-width:760px){
+    .glance,.lims{grid-template-columns:1fr 1fr}
+    .grid3,.assaywrap,.triptych{grid-template-columns:1fr}
+    .bar{grid-template-columns:5rem 1fr}
+    .rrow{grid-template-columns:8rem 1fr 2.6rem}
+    .arc .a{grid-template-columns:1fr}
+  }
+  @media (max-width:480px){ .glance{grid-template-columns:1fr} }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">
+      <span>Building an AI Scientist</span><span class="dot"></span>
+      <span>TernaryTx · future.bio · Pluto House · <b>Anthropic</b></span><span class="dot"></span>
+      <span>London · Jul 2026</span>
+    </div>
+    <h1>Does the rat body predict <span class="lift">human harm</span>?</h1>
+    <p class="thesis">~90% of drugs that clear animal safety still fail in humans, a third of it toxicity.
+      We asked whether <b>rat liver gene expression</b> adds anything to <b>chemical structure</b> when
+      predicting toxicity — and stress-tested every promising signal until it broke or held.</p>
+
+    <div class="verdict-line">
+      <span class="eyebrow">Bottom line</span>
+      <span class="big">Gene expression helps a little, but the wall is <b>cross-dataset comparability</b>,
+        not data volume — and for real human liver injury, structure alone still wins.</span>
+    </div>
+
+    <div class="links">
+      <a class="btn p" href="https://github.com/Bl4ckd09/Cross-Species-Translational-Alignment">↗ GitHub — code &amp; pipeline</a>
+      <a class="btn" href="https://huggingface.co/datasets/Marcolini/cross-species-translational-alignment">↗ HuggingFace — data &amp; results</a>
+    </div>
+
+    <div class="glance">
+      <div>
+        <div class="tag" style="color:var(--teal-ink)">Tox21</div>
+        <div class="q">Does rat expression add to structure?</div>
+        <div class="a">Yes — small, stress-response-specific</div>
+      </div>
+      <div>
+        <div class="tag" style="color:var(--null)">Scaling</div>
+        <div class="q">Does more animal data help?</div>
+        <div class="a">No — comparability is the ceiling</div>
+      </div>
+      <div>
+        <div class="tag" style="color:var(--null)">Human DILI</div>
+        <div class="q">Predict real clinical liver injury?</div>
+        <div class="a">No — structure alone wins</div>
+      </div>
+      <div>
+        <div class="tag" style="color:var(--caveat)">Withdrawal</div>
+        <div class="q">Predict drugs pulled from market?</div>
+        <div class="a">Biology edges it — but noisy</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ HYPOTHESIS ============ -->
+<section>
+  <div class="wrap">
+    <div class="shead"><span class="n">01</span><h2>The hypothesis</h2></div>
+    <div class="col">
+      <p>Toxicity is where the animal→human translation gap bites hardest. Chemical structure already
+        predicts many toxic mechanisms — but structure is blind to <em>what a dose actually does to a
+        living liver</em>. Gene expression is that readout.</p>
+      <p><b>Core question.</b> Given a compound's SMILES, does adding the rat liver's transcriptional
+        response improve prediction of the <span class="mono">12</span> Tox21 human toxicity-mechanism assays?</p>
+      <p><b>Sharper sub-hypothesis.</b> Expression should help the <b style="color:var(--purple-ink)">stress-response</b>
+        mechanisms — which act <em>through gene regulation</em> and leave a transcriptional footprint —
+        more than the <b style="color:var(--teal-ink)">nuclear-receptor binding</b> mechanisms, where the
+        molecule's shape already <em>is</em> the answer. Call it the <b>SR &gt; NR</b> prediction.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DATA ============ -->
+<section>
+  <div class="wrap">
+    <div class="shead"><span class="n">02</span><h2>The data</h2>
+      <span class="lede">Two rat toxicogenomics resources, cross-referenced to a human assay panel by standardized chemistry.</span></div>
+    <div class="grid3">
+      <div class="stat"><div class="figure">672</div><div class="cap">unique rat compounds</div>
+        <div class="sub">TG-GATEs ∪ DrugMatrix</div></div>
+      <div class="stat"><div class="figure te">177</div><div class="cap">primary supervised set</div>
+        <div class="sub">clean single-platform liver expression</div></div>
+      <div class="stat"><div class="figure pu">256</div><div class="cap">pooled after adding TG-GATEs</div>
+        <div class="sub">+79 compounds, ComBat-merged</div></div>
+    </div>
+    <p style="margin-top:1.3rem;color:var(--muted);max-width:70ch">Compounds are matched on
+      <span class="mono">InChIKey</span> connectivity (desalt → neutralize → key), the same pipeline across
+      all three sources. The primary set is capped at 177 by a deliberate choice: use only the
+      <span class="mono">Affymetrix Rat 230-2</span> liver arm so DrugMatrix and TG-GATEs share a platform —
+      trading coverage for a clean batch correction.</p>
+
+    <div class="assaywrap">
+      <div class="panel nr">
+        <h4>Nuclear-receptor · 7</h4>
+        <div class="desc">Receptor binding — a function of molecular shape.</div>
+        <div class="chips"><span class="chip">NR-AR</span><span class="chip">NR-AR-LBD</span><span class="chip">NR-AhR</span>
+          <span class="chip">NR-Aromatase</span><span class="chip">NR-ER</span><span class="chip">NR-ER-LBD</span><span class="chip">NR-PPARγ</span></div>
+      </div>
+      <div class="panel sr">
+        <h4>Stress-response · 5</h4>
+        <div class="desc">Cellular damage programs — expressed through genes.</div>
+        <div class="chips"><span class="chip">SR-ARE</span><span class="chip">SR-ATAD5</span><span class="chip">SR-HSE</span>
+          <span class="chip">SR-MMP</span><span class="chip">SR-p53</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PIPELINE ============ -->
+<section>
+  <div class="wrap">
+    <div class="shead"><span class="n">03</span><h2>The pipeline</h2>
+      <span class="lede">Modular, config-driven, and leakage-safe end to end — each stage independently runnable and cached.</span></div>
+    <div class="flowscroll">
+      <div class="flow">
+        <div class="step"><div class="k">curate</div><div class="t">Link &amp; key</div><div class="d">InChIKey match across TG-GATEs, DrugMatrix, Tox21</div></div>
+        <div class="step"><div class="k">signature</div><div class="t">logFC</div><div class="d">treated − matched vehicle, high-dose liver</div></div>
+        <div class="step"><div class="k">correct</div><div class="t">ComBat</div><div class="d">batch = data source; validated on shared drugs</div></div>
+        <div class="step"><div class="k">reduce</div><div class="t">PCA · 100</div><div class="d">fit on the train fold only</div></div>
+        <div class="step"><div class="k">fuse</div><div class="t">Structure ⊕ GE</div><div class="d">z-scored blocks, balanced</div></div>
+        <div class="step"><div class="k">evaluate</div><div class="t">Masked CV</div><div class="d">per-assay AUC + AUPRC + CIs</div></div>
+      </div>
+    </div>
+    <div class="flownote"><span class="lock">▍locked</span>
+      Every data-dependent transform — PCA, scalers, ComBat, the frozen Tox21 head — is fit inside the
+      training fold only. Repeated stratified cross-validation; fixed seeds; splits persisted.</div>
+  </div>
+</section>
+
+<!-- ============ PART 1 ============ -->
+<section>
+  <div class="wrap">
+    <div class="shead"><span class="n">04</span><h2>Experiments &amp; results</h2>
+      <span class="lede">Each finding is paired with the check that could have killed it. Verdicts are color-coded:
+        <span class="pill signal" style="text-transform:none">signal</span>
+        <span class="pill caveat" style="text-transform:none">nuanced</span>
+        <span class="pill null" style="text-transform:none">null</span>.</span></div>
+
+    <div class="part-label">Part 1 — Does gene expression add? (Tox21, N=177)</div>
+    <div class="results">
+
+      <article class="result">
+        <div class="result-head"><span class="rtag">R1</span><span class="pill signal">Signal</span></div>
+        <h3>Rat expression adds a small, stress-response-specific benefit.</h3>
+        <p class="lede">Three models, identical except the feature block. Gene expression <em>alone</em> already
+          beats chance — proof the rat transcriptome carries human-toxicity signal.</p>
+        <div class="figures">
+          <div class="fig"><span class="v">0.757</span><span class="l">structure only (AUC)</span></div>
+          <div class="fig"><span class="v">0.679</span><span class="l">expression only</span></div>
+          <div class="fig win"><span class="v">0.766</span><span class="l">structure + expression</span></div>
+          <div class="fig bio"><span class="v">+0.026</span><span class="l">SR-panel ΔAUC</span></div>
+        </div>
+        <div class="bars" style="margin-top:1rem">
+          <div class="bar"><span class="name">SR-p53</span><div class="track"><span class="zero"></span><span class="fill pos" style="width:24%"></span><span class="val" style="left:calc(50% + 26%)">+.048</span></div></div>
+          <div class="bar"><span class="name">SR-MMP</span><div class="track"><span class="zero"></span><span class="fill pos" style="width:21%"></span><span class="val" style="left:calc(50% + 23%)">+.042</span></div></div>
+          <div class="bar"><span class="name">NR-PPARγ</span><div class="track"><span class="zero"></span><span class="fill pos" style="width:24%"></span><span class="val" style="left:calc(50% + 26%)">+.048</span></div></div>
+          <div class="bar"><span class="name">NR-ER</span><div class="track"><span class="zero"></span><span class="fill pos" style="width:14%"></span><span class="val" style="left:calc(50% + 16%)">+.027</span></div></div>
+          <div class="bar"><span class="name">NR-AhR</span><div class="track"><span class="zero"></span><span class="fill neg" style="width:3%"></span><span class="val" style="right:calc(50% + 5%)">−.006</span></div></div>
+          <div class="bar"><span class="name">NR-ER-LBD</span><div class="track"><span class="zero"></span><span class="fill neg" style="width:14%"></span><span class="val" style="right:calc(50% + 16%)">−.028</span></div></div>
+        </div>
+        <p class="why"><b>Why.</b> Expression helps stress-response and the two <em>transcriptionally active</em>
+          receptors (PPARγ, ER are ligand-activated transcription factors), and does nothing for the pure
+          ligand-binding assays (AR-LBD, ER-LBD) where structure already hits ~0.90. The SR &gt; NR prediction holds.</p>
+      </article>
+
+      <article class="result">
+        <div class="result-head"><span class="rtag">R2</span><span class="pill caveat">Gotcha caught</span></div>
+        <h3>The benefit only appears once the two feature blocks are balanced.</h3>
+        <p class="lede">Before z-scoring the PCA blocks, structure's high-variance components drown out the
+          100 expression dimensions and fusion <em>loses</em>. Documented as a before/after so the win can't be dismissed.</p>
+        <div class="figures">
+          <div class="fig bad"><span class="v">−0.041</span><span class="l">macro ΔAUC, blocks unbalanced</span></div>
+          <div class="fig win"><span class="v">+0.009</span><span class="l">macro ΔAUC, z-scored</span></div>
+        </div>
+        <p class="why"><b>Why.</b> An L2 head penalizes all coefficients equally, so an unscaled block with larger
+          variance is effectively ignored. This is exactly the "expression drowned out" artifact — and why the
+          effect is real but fragile.</p>
+      </article>
+
+      <article class="result">
+        <div class="result-head"><span class="rtag">R3 · R4</span><span class="pill signal">Holds under stats</span></div>
+        <h3>100 components is optimal, and SR &gt; NR is significant at the repeat level.</h3>
+        <p class="lede">The stress-response benefit grows monotonically with the number of expression components —
+          it's distributed signal, not overfit noise. And the panel contrast survives a formal test.</p>
+        <div class="figures">
+          <div class="fig"><span class="v">+0.026</span><span class="l">SR − NR panel ΔAUC</span></div>
+          <div class="fig win"><span class="v">[.014,.037]</span><span class="l">95% CI — excludes 0</span></div>
+          <div class="fig"><span class="v">0.074</span><span class="l">assay-level Mann-Whitney p</span></div>
+        </div>
+        <p class="why"><b>Why.</b> The repeat-level test is significant; the assay-level test is a strong trend
+          (only 12 assays, and PPARγ/ER break the clean split for a good biological reason). The real divide is
+          <em>"acts through gene regulation" vs "acts through binding."</em></p>
+      </article>
+
+      <article class="result">
+        <div class="result-head"><span class="rtag">R5 · R5b</span><span class="pill caveat">Fragile</span></div>
+        <h3>The benefit is model- and encoder-dependent — and ECFP beat ChemBERT.</h3>
+        <p class="lede">Two robustness probes. Gradient-boosted trees overfit at N=177 and erase the gain.
+          A frozen ChemBERT structure encoder turned out <em>weaker</em> than plain ECFP fingerprints.</p>
+        <div class="figures">
+          <div class="fig"><span class="v">0.733</span><span class="l">GBM structure (overfits) vs 0.757</span></div>
+          <div class="fig"><span class="v">0.681</span><span class="l">ChemBERT structure vs 0.757 ECFP</span></div>
+          <div class="fig win"><span class="v">robust</span><span class="l">SR &gt; NR holds under both encoders</span></div>
+        </div>
+        <p class="why"><b>Why.</b> Frozen ChemBERT is a general representation; ECFP directly encodes the substructures
+          that drive assays — so ECFP was the <em>stronger, more conservative</em> baseline all along. The
+          conclusions survive the swap; only the magnitude tracks how strong the structure arm is.</p>
+      </article>
+    </div>
+
+    <!-- ============ PART 2: scaling ============ -->
+    <div class="part-label">Part 2 — Does more animal data help? (N=177 → 256)</div>
+    <div class="results">
+      <article class="result">
+        <div class="result-head"><span class="rtag">R6 · R7</span><span class="pill null">The wall</span></div>
+        <h3>More data didn't help — matched data helped, in proportion to how comparable it was.</h3>
+        <p class="lede">Pooling a second rat dataset (TG-GATEs, +79 compounds) with a <em>mismatched</em> exposure
+          window (hours) washed the signal out. The <em>time-matched</em> version (days) recovered it partway.
+          The recovered signal tracks cross-dataset agreement.</p>
+        <div class="triptych">
+          <div><div class="stage">N=177 · clean</div><div class="r" style="color:var(--purple-ink)">+.025</div><div class="sr">SR ΔAUC</div><div class="cap">single protocol</div></div>
+          <div><div class="stage">+256 · hours</div><div class="r">0.38</div><div class="sr" style="color:var(--null)">SR → +.001</div><div class="cap">ComBat agreement r · washed out</div></div>
+          <div><div class="stage">+256 · days</div><div class="r">0.44</div><div class="sr" style="color:var(--purple-ink)">SR → +.013</div><div class="cap">ComBat agreement r · recovered</div></div>
+        </div>
+        <p class="why"><b>Why.</b> Even same-platform, same-organ rat liver signatures for identical molecules agree
+          only <span class="mono">r ≈ 0.44</span> after batch correction — a 24-hour liver and a 5-day liver are
+          different biological states. <b>The bottleneck is comparability, not sample size.</b> It's the measurable,
+          in-rat preview of the animal→human gap.</p>
+      </article>
+    </div>
+
+    <!-- ============ PART 3: validation ============ -->
+    <div class="part-label">Part 3 — Does it predict real clinical harm? (retrospective validation)</div>
+    <div class="results">
+      <article class="result">
+        <div class="result-head"><span class="rtag">Val A</span><span class="pill caveat">Reframed</span></div>
+        <h3>Held-out Tox21 is infeasible by construction — the cross-validation already is that test.</h3>
+        <p class="lede">Every rat compound with a Tox21 label is, by definition, in the supervised set (it's the
+          intersection). There is no external hold-out — so the out-of-fold CV already answers it.</p>
+        <p class="why"><b>Why.</b> The supervised set <em>is</em> (TG-GATEs ∪ DrugMatrix) ∩ Tox21. Honest to
+          say so rather than manufacture a set that doesn't exist.</p>
+      </article>
+
+      <article class="result">
+        <div class="result-head"><span class="rtag">Val B</span><span class="pill null">Structure wins</span></div>
+        <h3>For real human liver injury (DILIrank), the model adds nothing over structure.</h3>
+        <p class="lede">A leakage-safe ladder on 134 shared drugs. The sanity gate passed first — measured Tox21 →
+          DILI ≈ chance, reproducing the published near-random result — then structure beat everything.</p>
+        <div class="rank">
+          <div class="rrow best"><span class="rn">Structure (ECFP)</span><div class="rtrack"><i style="width:79%"></i></div><span class="rv">0.699</span></div>
+          <div class="rrow mid"><span class="rn">Fused representation</span><div class="rtrack"><i style="width:57%"></i></div><span class="rv">0.600</span></div>
+          <div class="rrow mid"><span class="rn">Measured Tox21</span><div class="rtrack"><i style="width:50%"></i></div><span class="rv">0.550</span></div>
+          <div class="rrow dead"><span class="rn">Predicted Tox21 · cross-fit</span><div class="rtrack"><i style="width:37%"></i></div><span class="rv">0.465</span></div>
+          <div class="rrow dead"><span class="rn">Raw rat expression</span><div class="rtrack"><i style="width:32%"></i></div><span class="rv">0.516</span></div>
+        </div>
+        <p class="why"><b>The decisive check.</b> The chained pipeline (predicted Tox21 → DILI) looked promising at
+          <span class="mono">0.646</span> — but that was <b style="color:var(--null)">leakage</b>. Regenerating the
+          Tox21 predictions <em>out-of-fold</em> collapsed it to <span class="mono">0.465 ≈ chance</span>. A ~0.12-AUC
+          illusion only cross-fitting exposes.</p>
+      </article>
+
+      <article class="result">
+        <div class="result-head"><span class="rtag">Val B · 2nd</span><span class="pill bio">Biology edges it — noisy</span></div>
+        <h3>For market withdrawal, the pattern flips: biology beats structure.</h3>
+        <p class="lede">A separate, noisier target (ChEMBL withdrawal status). Here structure is near-chance —
+          withdrawal is driven by in-vivo/clinical effects, not molecular shape — and Tox21/expression features win.</p>
+        <div class="figures">
+          <div class="fig"><span class="v">0.56</span><span class="l">structure (≈ chance)</span></div>
+          <div class="fig bio"><span class="v">0.65</span><span class="l">measured Tox21</span></div>
+        </div>
+        <p class="why"><b>Treat as a lead, not a headline.</b> Only 35 withdrawn positives, a heterogeneous label
+          (drugs are pulled for efficacy and commercial reasons too), and the predicted-Tox21 number swings between
+          encoders — so it's a genuine, honest <em>contrast</em> worth chasing with a larger tox-specific set.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SYNTHESIS ============ -->
+<section>
+  <div class="wrap">
+    <div class="shead"><span class="n">05</span><h2>What it all says</h2></div>
+    <div class="col">
+      <div class="arc">
+        <div class="a"><span class="mk y">yes · small</span><div><div class="q">Does rat expression add to structure for Tox21?</div>
+          <div class="r">A modest, stress-response-specific, encoder-robust benefit — but fragile: it needs feature balancing and a regularized head.</div></div></div>
+        <div class="a"><span class="mk n">no</span><div><div class="q">Does more animal data strengthen it?</div>
+          <div class="r">No. Cross-dataset comparability caps out at r ≈ 0.44; matched exposure recovers signal, mismatched destroys it.</div></div></div>
+        <div class="a"><span class="mk n">no</span><div><div class="q">Does it predict real human liver injury?</div>
+          <div class="r">No. Structure alone wins; the one promising result was leakage, caught by cross-fitting.</div></div></div>
+        <div class="a"><span class="mk q2">maybe</span><div><div class="q">Does it predict drug withdrawal?</div>
+          <div class="r">Biology edges structure when the outcome is about in-vivo effect — but the label is noisy and the result unstable.</div></div></div>
+      </div>
+      <p class="kicker-quote">The animal→human gap is a <b>harmonization</b> problem — not a data-volume one.</p>
+      <p style="margin-top:1.1rem;color:var(--muted)">Two rat datasets for the same molecules agree only moderately;
+        a human-cell-line assay panel doesn't predict clinical DILI; a rat transcriptome doesn't rescue it. The lever
+        that matters is careful alignment of responses across systems — which is exactly what a rat→human translation
+        layer is for, and what this pipeline is built to drop it into.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LIMITATIONS ============ -->
+<section>
+  <div class="wrap">
+    <div class="shead"><span class="n">06</span><h2>Honest limitations</h2>
+      <span class="lede">Stated plainly, because the checks that surface them are the point.</span></div>
+    <div class="lims">
+      <div class="lim"><b>Small N.</b><p>177 compounds (256 pooled); sparse assays like NR-PPARγ have 12–16 actives and wide intervals.</p></div>
+      <div class="lim"><b>Baseline below SOTA.</b><p>ECFP+logistic (and weaker frozen ChemBERT) sit under published DILI models (0.75–0.83); a fine-tuned transformer is the open follow-up.</p></div>
+      <div class="lim"><b>Tox21 is a prior, not truth.</b><p>Human in-vitro assays are a mechanism prior — we predict them, not the rat's own histopathology.</p></div>
+      <div class="lim"><b>Imbalanced, noisy clinical labels.</b><p>DILIrank overlap is ~82% positive; the withdrawal label mixes reasons and has only 35 positives.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="eyebrow">Reproducible</div>
+        <p style="margin-top:.6rem">Every result regenerates from the scripts plus public downloads —
+          all transforms fit in-fold, seeds fixed, splits persisted. Large matrices and third-party raw
+          labels are not redistributed; the download URLs live in the scripts.</p>
+        <div class="links" style="margin-top:1rem">
+          <a class="btn" href="https://github.com/Bl4ckd09/Cross-Species-Translational-Alignment">GitHub</a>
+          <a class="btn" href="https://huggingface.co/datasets/Marcolini/cross-species-translational-alignment">HuggingFace</a>
+        </div>
+      </div>
+      <div class="credit">
+        Cross-Species Translational Alignment<br>
+        TG-GATEs · DrugMatrix · Tox21 · DILIrank · ChEMBL<br>
+        Building an AI Scientist — London, Jul 2026<br>
+        Data: NTP · LSDB · EPA/NCATS · FDA/NCTR · EBI
+      </div>
+    </div>
+  </div>
+</footer>
