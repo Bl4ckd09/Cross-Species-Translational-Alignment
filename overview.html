@@ -177,6 +177,13 @@
   .fig.bad .v{color:var(--null)}
   .why{font-size:.95rem;color:var(--muted);margin:.9rem 0 0;max-width:72ch}
   .why b{color:var(--ink)}
+  .why code{font-family:var(--mono);font-size:.82em;background:var(--surface-2);padding:.05rem .3rem;border-radius:4px}
+  .trynote{margin-top:.9rem;background:var(--surface-2);border:1px dashed var(--line-strong);border-radius:8px;
+    padding:.75rem 1rem;font-size:.86rem;color:var(--muted);max-width:72ch}
+  .trynote b{color:var(--ink)}
+  .trynote .lbl{font-family:var(--mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--teal-ink);display:block;margin-bottom:.3rem}
+  .trynote code{font-family:var(--mono);font-size:.82em;background:var(--surface);padding:.05rem .3rem;border-radius:4px}
 
   /* mini diverging bar */
   .bars{margin:.4rem 0 0;display:flex;flex-direction:column;gap:.4rem}
@@ -493,13 +500,20 @@ logFC · 31k probes <span class="op">──►</span> <span class="ex">PCA·100<
           <div class="fig"><span class="v">0.681</span><span class="l">ChemBERT structure vs 0.757 ECFP</span></div>
           <div class="fig win"><span class="v">robust</span><span class="l">SR &gt; NR holds under both encoders</span></div>
         </div>
-        <p class="why"><b>Why ChemBERT loses.</b> It's used <em>frozen</em> (no fine-tuning), was pretrained on
-          SMILES masked-language-modelling — chemical <em>grammar</em>, not toxicity — and its tokens are
-          mean-pooled, diluting local signal. ECFP instead <em>directly enumerates</em> the circular substructures
-          that drive assay hits, so a linear model reads "has reactive group X → active" straight off. At N=177 you
-          can't fine-tune a 768-dim transformer, so the frozen embedding loses to the task-specific fingerprint —
-          a documented MoleculeNet pattern. ECFP was the <em>stronger, more conservative</em> baseline all along;
-          the conclusions survive the swap, only the magnitude tracks how strong the structure arm is.</p>
+        <p class="why"><b>Why ChemBERT loses — a coordinate mismatch, not a knowledge gap.</b> ECFP is a sparse,
+          axis-aligned basis where each bit <em>is</em> a substructure, so a linear head reads "has reactive group
+          X → active" straight off — exactly how these assays fire. A frozen transformer stores the same facts in a
+          <em>dense basis rotated for a different objective</em> (reconstructing SMILES tokens); re-isolating "has a
+          nitroaromatic" from 768 entangled dimensions is a learning problem you can't solve at N=177. So the loss
+          is <em>expected</em> — and it <b>strengthens</b> the study: "does GE add?" ran against a genuinely strong,
+          literature-appropriate baseline, not a weak one. It fires especially cleanly here because SR toxicity is
+          driven by <em>reactive structural alerts</em> — the very substructures ECFP enumerates and a fingerprint
+          was built for.</p>
+        <div class="trynote"><span class="lbl">Cheap next try · no torch</span>
+          Not a new encoder — <code>raw ECFP-counts + RDKit physchem → sparse (L1) head</code>, skipping the PCA
+          step that truncates <b>rare toxicophores</b> (low-variance bits set in only a few compounds). Expect a
+          small lift, quite possibly <em>within</em> the ±0.04 CI. The encoder only sets how strong the baseline
+          is; <b>N is the ceiling</b> — the real levers stay data comparability and the rat→human layer.</div>
       </article>
     </div>
 
