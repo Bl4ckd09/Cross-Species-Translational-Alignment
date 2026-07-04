@@ -45,6 +45,7 @@ then stress-tested it — and report where it held and where it didn't (see [Res
 
 - Code: <https://github.com/Bl4ckd09/Cross-Species-Translational-Alignment>
 - Data + results: <https://huggingface.co/datasets/Marcolini/cross-species-translational-alignment>
+- Visual overview: [`overview.html`](overview.html) — a self-contained field report (hypothesis → methods → every result → conclusions); open locally to view rendered.
 
 ## The deliverable: `master_cohort.csv`
 
