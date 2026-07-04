@@ -40,7 +40,7 @@ ASSAYS = ["NR-AR","NR-AR-LBD","NR-AhR","NR-Aromatase","NR-ER","NR-ER-LBD","NR-PP
 # struct_kind: "ecfp4" (default, no torch) | "chembert" (Baseline-1 encoder — needs torch,
 # see scripts/structure_embed.py). TEAMMATES: set struct_kind="chembert" to use ChemBERT.
 CFG = dict(n_pca_expr=100, n_pca_struct=128, folds=5, repeats=10, C=1.0, seed0=1000,
-           struct_kind="ecfp4", model="logistic",   # model: "logistic" | "gbm" (Baseline 2)
+           struct_kind=os.environ.get("STRUCT_KIND", "ecfp4"), model="logistic",  # env: STRUCT_KIND=chembert
            # signatures/labels: "drugmatrix_liver_logfc.parquet"+"labels.csv" (N=177) OR
            #                    "combined_logfc.parquet"+"combined_labels.csv" (N=256, post-ComBat)
            signatures="drugmatrix_liver_logfc.parquet", labels="labels.csv")
@@ -142,8 +142,9 @@ def run():
     macro["dAUC_fusion_minus_struct"] = round(tab.dAUC_fusion_minus_struct.mean(), 3)
     tab = pd.concat([tab, pd.DataFrame([macro])], ignore_index=True)
 
-    tab.to_csv(os.path.join(RES, "results_table.csv"), index=False)
-    with open(os.path.join(RES, "run_config.json"), "w") as f:
+    sfx = "" if CFG["struct_kind"] == "ecfp4" else f"_{CFG['struct_kind']}"
+    tab.to_csv(os.path.join(RES, f"results_table{sfx}.csv"), index=False)
+    with open(os.path.join(RES, f"run_config{sfx}.json"), "w") as f:
         json.dump({"config": CFG, "n_compounds": int(N), "assays": ASSAYS,
                    "n_splits_total": len(splits_log)}, f, indent=2)
 
@@ -154,7 +155,7 @@ def run():
     print(tab[show].to_string(index=False))
     print(f"\nMACRO AUC  structure={macro['structure_only_AUC']}  expr_only={macro['expr_only_AUC']}  "
           f"fusion={macro['fusion_AUC']}  |  mean dAUC(fusion-struct)={macro['dAUC_fusion_minus_struct']}")
-    print(f"wrote {RES}/results_table.csv")
+    print(f"wrote {RES}/results_table{sfx}.csv  (structure encoder: {CFG['struct_kind']})")
 
 if __name__ == "__main__":
     run()

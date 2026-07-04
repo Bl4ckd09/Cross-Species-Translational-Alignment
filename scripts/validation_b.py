@@ -48,6 +48,7 @@ SALT = (r"\b(sulfate|hydrochloride|hcl|sodium|potassium|calcium|mesylate|maleate
         r"acetate|phosphate|besylate|fumarate|succinate|dihydrate|hydrate|monohydrate|bromide|"
         r"chloride|nitrate|hydrobromide|disodium|hemihydrate|hydroxide|dihydrochloride)\b")
 CFG = dict(n_pca_expr=100, n_pca_struct=128, folds=5, repeats=10, C=1.0, seed0=2000)
+STRUCT = os.environ.get("STRUCT_KIND", "ecfp4")   # "ecfp4" | "chembert" (cached; no torch in main venv)
 
 def norm(x):
     x = re.sub(r"[^a-z0-9 ]", " ", str(x).lower()); x = re.sub(SALT, " ", x)
@@ -133,7 +134,7 @@ def main(label_source="dilirank"):
     expr_conns = set(comb.index)
 
     # frozen Tox21 predictions for the 256
-    ST256 = featurize(list(comb.index), kind="ecfp4").loc[comb.index].values.astype("float32")
+    ST256 = featurize(list(comb.index), kind=STRUCT).loc[comb.index].values.astype("float32")
     Ytox256 = tox.loc[comb.index, ASSAYS].apply(pd.to_numeric, errors="coerce").values
     predD = pd.DataFrame(frozen_tox21_predict(comb.values.astype("float32"), ST256, Ytox256),
                          index=comb.index, columns=ASSAYS)                        # in-sample (optimistic)
@@ -145,7 +146,7 @@ def main(label_source="dilirank"):
     R = [("Baseline0 prevalence", len(y), 0.500, 0.000, round(prev, 3), 0.000)]
 
     # Baseline 1: structure, all overlap
-    ST = featurize(conns, kind="ecfp4").loc[conns].values.astype("float32")
+    ST = featurize(conns, kind=STRUCT).loc[conns].values.astype("float32")
     R.append(row("Baseline1 structure(ECFP)", len(y), *cv_eval([(ST, CFG["n_pca_struct"])], y)))
 
     # Baseline 2: measured Tox21 (impute missing 0.5), compounds with >=1 measured
@@ -155,7 +156,7 @@ def main(label_source="dilirank"):
 
     # expression subset for B3 / A / B  — everything below on the SAME 135 compounds (fair head-to-head)
     ce = [c for c in conns if c in expr_conns]; ye = dili.set_index("conn")["label"].loc[ce].values
-    GEe = comb.loc[ce].values.astype("float32"); STe = featurize(ce, kind="ecfp4").loc[ce].values.astype("float32")
+    GEe = comb.loc[ce].values.astype("float32"); STe = featurize(ce, kind=STRUCT).loc[ce].values.astype("float32")
     toxe = coh_i.reindex(ce)[ASSAYS].apply(pd.to_numeric, errors="coerce").fillna(0.5).values
     R.append(("-- same-set (N=%d) head-to-head --" % len(ye), len(ye), np.nan, np.nan, np.nan, np.nan))
     R.append(row("  B1 structure @135",   len(ye), *cv_eval([(STe, CFG["n_pca_struct"])], ye)))
@@ -166,8 +167,9 @@ def main(label_source="dilirank"):
     R.append(row("  B  fusedRep @135",     len(ye), *cv_eval([(STe, CFG["n_pca_struct"]), (GEe, CFG["n_pca_expr"])], ye)))
 
     tab = pd.DataFrame(R, columns=["model", "N", "AUC", "AUC_ci", "AUPRC", "AUPRC_ci"])
-    outname = "validation_b.csv" if label_source == "dilirank" else f"validation_b_{label_source}.csv"
-    tab.to_csv(os.path.join(RES, outname), index=False)
+    sfx = "" if STRUCT == "ecfp4" else f"_{STRUCT}"
+    base = "validation_b" if label_source == "dilirank" else f"validation_b_{label_source}"
+    tab.to_csv(os.path.join(RES, f"{base}{sfx}.csv"), index=False)
     tgt = {"dilirank": "DILIrank DILI-concern", "withdrawn": "market-withdrawal (ChEMBL, SEPARATE noisier target)"}[label_source]
     print(f"\n=== VALIDATION B — {tgt} ===")
     print(f"overlap compounds: {len(y)}  positives {int(y.sum())} negatives {int((y==0).sum())}  "

@@ -218,8 +218,10 @@ points at — `drugmatrix_liver_logfc.parquet` + `labels.csv` for N=177, `combin
 ## Next steps
 
 Comparability — not data volume — is the bottleneck, so the next moves sharpen the test:
-1. **Stronger structure arm** — swap ECFP4 → ChemBERT (a torch-env drop-in behind the same
-   `featurize()` contract) to confirm the pattern holds against a stronger structure encoder.
+1. **Stronger structure arm** — *done*: swapped ECFP4 → ChemBERT (`STRUCT_KIND=chembert`). Frozen
+   ChemBERT is actually *weaker* than ECFP for these tox tasks (Tox21 0.68 vs 0.76; DILI 0.59 vs
+   0.70), so ECFP was the stronger baseline and the conclusions hold under both (see RESULTS.md §5b).
+   A *fine-tuned* transformer remains the open follow-up.
 2. **Better harmonisation** — go beyond ComBat (the r≈0.44 ceiling), e.g. tissue/time as covariates
    or a learned rat→rat alignment, before pooling. *(Done: repeat-dose day-matching, which lifted
    r 0.38 → 0.44.)*

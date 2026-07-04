@@ -132,6 +132,38 @@ the fix: **more data** (so stronger models stop overfitting), which is Plan A.
 
 ---
 
+## 5b. ChemBERT structure arm — *is ECFP too weak a baseline? No — frozen ChemBERT is weaker*
+
+The plan's Baseline 1 is ChemBERT, and ECFP's below-SOTA DILI number (§9) raised the question of
+whether a transformer encoder would change the conclusions. Added via a dedicated torch venv that
+only generates the embedding cache (frozen `ChemBERTa-zinc-base-v1`, 768-d mean-pooled → PCA-128);
+the main pipeline reads the cache, so `STRUCT_KIND=chembert` swaps the encoder with no other change.
+([`results_table_chembert.csv`](data/results/results_table_chembert.csv),
+[`validation_b_chembert.csv`](data/results/validation_b_chembert.csv))
+
+| Structure encoder | Tox21 structure-only | Tox21 fusion | Tox21 SR ΔAUC | DILI structure (N=134) |
+|---|--:|--:|--:|--:|
+| **ECFP4** | **0.757** | 0.766 | +0.025 | **0.699** |
+| ChemBERT (frozen) | 0.681 | 0.716 | +0.056 | 0.592 |
+
+**Why.** Frozen ChemBERTa (no fine-tuning, mean-pooled) is a *general* pretrained representation,
+whereas ECFP directly encodes the substructures that drive assay activity — so for Tox21/DILI,
+**ECFP beats frozen ChemBERT** (a documented pattern). Our ECFP baseline was therefore the *stronger,
+more conservative* choice, not a weakness.
+
+**Interpretation (three robustness reads).**
+1. *"Does GE add" survives the encoder swap.* Fusion still beats structure under ChemBERT (+0.035
+   macro, +0.056 SR) — in fact *larger*, but only because the weaker ChemBERT structure leaves more
+   room. The SR>NR ordering holds under both encoders.
+2. *The DILI SOTA gap isn't about our encoder.* ChemBERT scores **further below** the published
+   0.75–0.83 bar (0.59), so that gap reflects model sophistication (fine-tuning / ensembles /
+   descriptor-rich pipelines), not "we should have used a transformer."
+3. *It sharpens the withdrawal caveat.* Measured-Tox21-beats-structure is stable across encoders
+   (0.65 vs ~0.58), but Approach A's predicted-Tox21 number swings 0.70→0.53 between encoders —
+   confirming §9.3's lead is noisy and not to be over-read.
+
+---
+
 ## 6. Plan A, single-dose — does more data grow the benefit?  → *no, it washes out*
 
 **Setup.** Add TG-GATEs (E-MTAB-799, single-dose) liver → 79 new compounds → N=256, ComBat-merged
@@ -270,7 +302,8 @@ structure (0.70) beats human-cell-line Tox21 (0.55) by ~0.15 AUC, and our expres
 extend that.
 
 **Caveats.** (a) Our structure arm (0.65–0.70) is **below published SOTA (0.75–0.83)** — ECFP4+logistic
-on small, imbalanced N=134; ChemBERT (teammate drop-in) is the fairer structure model. The robust
+on small, imbalanced N=134. A **ChemBERT** arm (§5b) was run and is *weaker still* (0.59), so the
+SOTA gap is model sophistication, not encoder choice; ECFP is the stronger baseline here. The robust
 finding is the *ordering* (structure > expression/fused), not the absolute number. (b) Input-overlap
 for A/B/B3 is unavoidable — expression + Tox21 exist only for training compounds — so the model can
 only be scored on compounds whose *inputs* it saw (not their DILI label; different target). Approach

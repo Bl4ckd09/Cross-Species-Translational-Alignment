@@ -1,0 +1,11 @@
+model,N,AUC,AUC_ci,AUPRC,AUPRC_ci
+Baseline0 prevalence,280,0.5,0.0,0.825,0.0
+Baseline1 structure(ECFP),280,0.571,0.018,0.857,0.008
+Baseline2 measuredTox21,268,0.514,0.01,0.858,0.005
+-- same-set (N=134) head-to-head --,134,,,,
+  B1 structure @135,134,0.592,0.027,0.95,0.003
+  B2 measuredTox21 @135,134,0.55,0.029,0.939,0.012
+  B3 rawExpression @135,134,0.516,0.041,0.923,0.009
+  A  predTox21 in-sample @135,134,0.581,0.044,0.946,0.013
+  A  predTox21 cross-fit @135,134,0.553,0.029,0.945,0.006
+  B  fusedRep @135,134,0.583,0.03,0.945,0.004
