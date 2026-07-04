@@ -40,12 +40,15 @@ ASSAYS = ["NR-AR","NR-AR-LBD","NR-AhR","NR-Aromatase","NR-ER","NR-ER-LBD","NR-PP
 # struct_kind: "ecfp4" (default, no torch) | "chembert" (Baseline-1 encoder — needs torch,
 # see scripts/structure_embed.py). TEAMMATES: set struct_kind="chembert" to use ChemBERT.
 CFG = dict(n_pca_expr=100, n_pca_struct=128, folds=5, repeats=10, C=1.0, seed0=1000,
-           struct_kind="ecfp4", model="logistic")   # model: "logistic" | "gbm" (Baseline 2)
+           struct_kind="ecfp4", model="logistic",   # model: "logistic" | "gbm" (Baseline 2)
+           # signatures/labels: "drugmatrix_liver_logfc.parquet"+"labels.csv" (N=177) OR
+           #                    "combined_logfc.parquet"+"combined_labels.csv" (N=256, post-ComBat)
+           signatures="drugmatrix_liver_logfc.parquet", labels="labels.csv")
 
-def load():
-    sig = pd.read_parquet(os.path.join(SIG, "drugmatrix_liver_logfc.parquet"))
-    lab = pd.read_csv(os.path.join(SIG, "labels.csv")).set_index("connectivity").loc[sig.index]
-    st  = featurize(list(sig.index), kind=CFG["struct_kind"]).loc[sig.index]
+def load(cfg=CFG):
+    sig = pd.read_parquet(os.path.join(SIG, cfg["signatures"]))
+    lab = pd.read_csv(os.path.join(SIG, cfg["labels"])).set_index("connectivity").loc[sig.index]
+    st  = featurize(list(sig.index), kind=cfg["struct_kind"]).loc[sig.index]
     Y = lab[ASSAYS].apply(pd.to_numeric, errors="coerce").values.astype(float)  # 0/1/nan
     return sig.index.to_numpy(), sig.values.astype("float32"), st.values.astype("float32"), Y
 
@@ -70,7 +73,7 @@ APPROACHES = ["structure_only", "expr_only", "fusion"]
 def evaluate(cfg, data=None):
     """Run repeated stratified CV; return rec[approach][assay] = {'auc':[...per repeat],'ap':[...]}.
     Reusable across config sweeps. All transforms fit in-fold (leakage-safe)."""
-    conns, GE, ST, Y = data if data is not None else load()
+    conns, GE, ST, Y = data if data is not None else load(cfg)
     N = len(conns)
     strat = pd.qcut(np.nansum(Y == 1, axis=1), 4, labels=False, duplicates="drop")
     rec = {ap: {a: {"auc": [], "ap": []} for a in ASSAYS} for ap in APPROACHES}
@@ -106,7 +109,7 @@ def evaluate(cfg, data=None):
     return rec, (conns, Y)
 
 def run():
-    data = load()
+    data = load(CFG)
     conns, GE, ST, Y = data
     N = len(conns)
     approaches = APPROACHES
