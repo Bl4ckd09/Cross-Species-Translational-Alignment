@@ -1,0 +1,19 @@
+# ChemBERT structure encoder — install on a TORCH-CAPABLE machine
+# (Apple-Silicon / Linux / cloud GPU). The Intel-Mac dev box can't run this
+# (torch caps at 2.2.2 there), which is why ECFP4 is the default backend.
+#
+# Standard install (torch-capable box):
+#   pip install -r scripts/requirements-chembert.txt
+#
+# Then flip ONE line in scripts/run_experiment.py:
+#   CFG["struct_kind"] = "chembert"
+# and re-run:  python scripts/run_experiment.py
+#
+# The ChemBERTa embeddings cache to data/features/, so featurization runs once.
+
+torch>=2.1          # Intel-mac only: there torch<=2.2.2, so also pin transformers==4.44.2
+transformers>=4.30
+rdkit
+pandas
+pyarrow
+scikit-learn

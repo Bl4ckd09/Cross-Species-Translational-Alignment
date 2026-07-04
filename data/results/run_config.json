@@ -5,7 +5,8 @@
     "folds": 5,
     "repeats": 10,
     "C": 1.0,
-    "seed0": 1000
+    "seed0": 1000,
+    "struct_kind": "ecfp4"
   },
   "n_compounds": 177,
   "assays": [
@@ -22,5 +23,5 @@
     "SR-MMP",
     "SR-p53"
   ],
-  "n_splits_total": 50
+  "n_splits_total": 1
 }

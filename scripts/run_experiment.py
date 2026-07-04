@@ -22,6 +22,8 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.utils.class_weight import compute_sample_weight
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import roc_auc_score, average_precision_score
 
@@ -35,43 +37,50 @@ RES  = os.path.join(ROOT, "data", "results"); os.makedirs(RES, exist_ok=True)
 ASSAYS = ["NR-AR","NR-AR-LBD","NR-AhR","NR-Aromatase","NR-ER","NR-ER-LBD","NR-PPAR-gamma",
           "SR-ARE","SR-ATAD5","SR-HSE","SR-MMP","SR-p53"]
 
-CFG = dict(n_pca_expr=100, n_pca_struct=128, folds=5, repeats=10, C=1.0, seed0=1000)
+# struct_kind: "ecfp4" (default, no torch) | "chembert" (Baseline-1 encoder — needs torch,
+# see scripts/structure_embed.py). TEAMMATES: set struct_kind="chembert" to use ChemBERT.
+CFG = dict(n_pca_expr=100, n_pca_struct=128, folds=5, repeats=10, C=1.0, seed0=1000,
+           struct_kind="ecfp4", model="logistic")   # model: "logistic" | "gbm" (Baseline 2)
 
 def load():
     sig = pd.read_parquet(os.path.join(SIG, "drugmatrix_liver_logfc.parquet"))
     lab = pd.read_csv(os.path.join(SIG, "labels.csv")).set_index("connectivity").loc[sig.index]
-    st  = featurize(list(sig.index)).loc[sig.index]
+    st  = featurize(list(sig.index), kind=CFG["struct_kind"]).loc[sig.index]
     Y = lab[ASSAYS].apply(pd.to_numeric, errors="coerce").values.astype(float)  # 0/1/nan
     return sig.index.to_numpy(), sig.values.astype("float32"), st.values.astype("float32"), Y
 
-def fit_head(Xtr, ytr, C):
+def fit_head(Xtr, ytr, cfg):
+    """Masked per-assay head. model: 'logistic' (Baseline 1 / Approach A) | 'gbm' (Baseline 2)."""
     m = ~np.isnan(ytr)
     if ytr[m].sum() < 2 or (1 - ytr[m]).sum() < 2:
         return None
-    clf = LogisticRegression(max_iter=3000, class_weight="balanced", C=C)
-    clf.fit(Xtr[m], ytr[m].astype(int))
+    X, y = Xtr[m], ytr[m].astype(int)
+    if cfg.get("model", "logistic") == "gbm":
+        clf = HistGradientBoostingClassifier(max_depth=3, learning_rate=0.1, max_iter=200,
+                                             l2_regularization=1.0, min_samples_leaf=10,
+                                             early_stopping=False, random_state=0)
+        clf.fit(X, y, sample_weight=compute_sample_weight("balanced", y))
+    else:
+        clf = LogisticRegression(max_iter=3000, class_weight="balanced", C=cfg["C"])
+        clf.fit(X, y)
     return clf
 
-def run():
-    conns, GE, ST, Y = load()
+APPROACHES = ["structure_only", "expr_only", "fusion"]
+
+def evaluate(cfg, data=None):
+    """Run repeated stratified CV; return rec[approach][assay] = {'auc':[...per repeat],'ap':[...]}.
+    Reusable across config sweeps. All transforms fit in-fold (leakage-safe)."""
+    conns, GE, ST, Y = data if data is not None else load()
     N = len(conns)
-    active_count = np.nansum(Y == 1, axis=1)
-    strat = pd.qcut(active_count, 4, labels=False, duplicates="drop")
-    approaches = ["structure_only", "expr_only", "fusion"]
-
-    # per-repeat, per-approach, per-assay AUC/AUPRC
-    rec = {ap: {a: {"auc": [], "ap": []} for a in ASSAYS} for ap in approaches}
-    splits_log = []
-
-    for r in range(CFG["repeats"]):
-        seed = CFG["seed0"] + r
-        skf = StratifiedKFold(CFG["folds"], shuffle=True, random_state=seed)
-        oof = {ap: np.full((N, len(ASSAYS)), np.nan) for ap in approaches}
+    strat = pd.qcut(np.nansum(Y == 1, axis=1), 4, labels=False, duplicates="drop")
+    rec = {ap: {a: {"auc": [], "ap": []} for a in ASSAYS} for ap in APPROACHES}
+    for r in range(cfg["repeats"]):
+        skf = StratifiedKFold(cfg["folds"], shuffle=True, random_state=cfg["seed0"] + r)
+        oof = {ap: np.full((N, len(ASSAYS)), np.nan) for ap in APPROACHES}
         for tr, te in skf.split(np.zeros(N), strat):
-            splits_log.append({"repeat": r, "seed": seed, "n_train": len(tr), "n_test": len(te)})
-            ge = make_embedder("pca", n_components=CFG["n_pca_expr"])
+            ge = make_embedder("pca", n_components=cfg["n_pca_expr"])
             Zge_tr, Zge_te = ge.fit_transform(GE[tr]), ge.transform(GE[te])
-            se = make_embedder("pca", n_components=CFG["n_pca_struct"])
+            se = make_embedder("pca", n_components=cfg["n_pca_struct"])
             Zst_tr, Zst_te = se.fit_transform(ST[tr]), se.transform(ST[te])
             feats = {
                 "structure_only": (Zst_tr, Zst_te),
@@ -79,23 +88,30 @@ def run():
                 "fusion":         (np.hstack([Zst_tr, Zge_tr]), np.hstack([Zst_te, Zge_te])),
             }
             for ap, (Ftr, Fte) in feats.items():
-                # z-score all PCs (fit on train) so structure & GE blocks are balanced
-                sc = StandardScaler().fit(Ftr)
+                sc = StandardScaler().fit(Ftr)              # z-score PCs -> balance blocks
                 Ftr, Fte = sc.transform(Ftr), sc.transform(Fte)
                 for j, a in enumerate(ASSAYS):
-                    clf = fit_head(Ftr, Y[tr, j], CFG["C"])
+                    clf = fit_head(Ftr, Y[tr, j], cfg)
                     if clf is None: continue
                     mte = ~np.isnan(Y[te, j])
                     if mte.any():
                         oof[ap][te[mte], j] = clf.predict_proba(Fte[mte])[:, 1]
-        # per-repeat metrics from pooled OOF
-        for ap in approaches:
+        for ap in APPROACHES:
             for j, a in enumerate(ASSAYS):
                 yj, pj = Y[:, j], oof[ap][:, j]
                 m = ~np.isnan(yj) & ~np.isnan(pj)
                 if yj[m].sum() >= 2 and (1 - yj[m]).sum() >= 2:
                     rec[ap][a]["auc"].append(roc_auc_score(yj[m], pj[m]))
                     rec[ap][a]["ap"].append(average_precision_score(yj[m], pj[m]))
+    return rec, (conns, Y)
+
+def run():
+    data = load()
+    conns, GE, ST, Y = data
+    N = len(conns)
+    approaches = APPROACHES
+    rec, _ = evaluate(CFG, data=data)
+    splits_log = [{"repeats": CFG["repeats"], "folds": CFG["folds"]}]
 
     # ---- assemble results table ----
     def ci(x):

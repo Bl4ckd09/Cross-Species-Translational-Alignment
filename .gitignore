@@ -14,3 +14,15 @@ data/_raw/
 
 # Raw third-party expression matrices are NOT redistributed here (see README "Provenance / sources").
 # Reproduce them locally with:  python scripts/retrieve_expression.py
+
+# Defensive: never auto-commit large binary/raw formats (e.g. a future TG-GATEs / Plan-A fetch)
+*.CEL
+*.CEL.gz
+*.cel
+*.h5
+*.hdf5
+*.npy
+*.npz
+*.feather
+*.pkl
+**/_raw/

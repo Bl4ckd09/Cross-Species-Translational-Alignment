@@ -1,0 +1,24 @@
+SR-vs-NR test  (n_pca_expr=100, 8 repeats x 5 folds)
+
+per-assay mean dAUC(fusion - structure):
+  NR-AR          -0.0063   [NR]
+  NR-AR-LBD      -0.0182   [NR]
+  NR-AhR         -0.0059   [NR]
+  NR-Aromatase   -0.0221   [NR]
+  NR-ER          +0.0252   [NR]
+  NR-ER-LBD      -0.0273   [NR]
+  NR-PPAR-gamma  +0.0543   [NR]
+  SR-ARE         +0.0170   [SR]
+  SR-ATAD5       +0.0025   [SR]
+  SR-HSE         +0.0215   [SR]
+  SR-MMP         +0.0382   [SR]
+  SR-p53         +0.0507   [SR]
+
+SR panel mean dAUC = +0.0260   (assays: SR-ARE, SR-ATAD5, SR-HSE, SR-MMP, SR-p53)
+NR panel mean dAUC = -0.0001
+SR - NR            = +0.0261
+
+assay-level Mann-Whitney U (SR>NR): U=27.0, one-sided p=0.0745
+  rank-biserial effect size        = +0.543
+repeat-level mean(SR)-mean(NR)     = +0.0261  95% CI [+0.0136, +0.0371]
+  -> CI excludes 0: SR>NR is significant
