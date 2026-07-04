@@ -1,0 +1,16 @@
+# Python env & caches
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# OS / editor / agent
+.DS_Store
+.claude/
+
+# Large data — regenerable via scripts/retrieve_expression.py; big-data artifacts belong on HF Datasets
+data/_raw/
+*.parquet
+
+# Raw third-party expression matrices are NOT redistributed here (see README "Provenance / sources").
+# Reproduce them locally with:  python scripts/retrieve_expression.py

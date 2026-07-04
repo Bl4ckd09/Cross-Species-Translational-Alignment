@@ -1,0 +1,6 @@
+signature source: drugmatrix_liver  |  config: {'source': 'drugmatrix_liver', 'dose': 'high', 'time_agg': 'mean', 'level': 'probe', 'control': 'vehicle_time'}
+compounds: 177  |  probes: 31099
+logFC range: -7.91 .. 9.78 (median|logFC| 0.091)
+sensitivity (aggregated-time vs single-latest-timepoint):
+  per-compound corr  median=0.885  min=0.553  frac>0.8=0.76
+label coverage: 1834 cells, 327 actives across 12 assays

@@ -1,0 +1,147 @@
+name,abbr,liver,kidney,connectivity,NR-AR,NR-AR-LBD,NR-AhR,NR-Aromatase,NR-ER,NR-ER-LBD,NR-PPAR-gamma,SR-ARE,SR-ATAD5,SR-HSE,SR-MMP,SR-p53
+"2,4-dinitrophenol",DNP,True,False,UFBJCMHMOXMLKC,0,,,0,,0,,1,,0,1,0
+2-nitrofluorene,2NF,True,False,XFOHWECQTFIEIX,0,0,1,,1,0,0,1,0,0,1,0
+3-methylcholanthrene,3-MC,True,False,PPQNQXQZIWHJRB,0,0,1,,,,,1,0,,1,0
+acetamide,AAA,True,False,DLFVBJFMPXGRIB,0,0,0,0,0,0,0,0,0,0,0,0
+acetamidofluorene,AAF,True,False,CZIHNRWJTSTCEX,0,0,1,,1,0,0,1,1,0,1,0
+acetaminophen,APAP,True,True,RZVAJINKPMORJF,0,0,0,0,0,0,0,0,0,0,0,0
+acetazolamide,ACZ,True,True,BZKPWHYZMXOIDC,0,0,0,0,0,0,0,0,0,0,0,0
+adapin,ADP,True,False,ODQWQRRAPPTVAG,0,0,0,0,0,0,0,0,0,0,,0
+ajmaline,AJM,True,False,CJDRUOGAGYHKKD,0,0,0,0,0,0,0,,0,,,0
+allopurinol,APL,True,True,OFCNXPDARWKPPY,0,0,0,0,0,0,0,0,0,0,0,0
+allyl alcohol,AA,True,True,XXROGKLTLUQVRX,0,0,0,0,0,0,0,0,0,0,0,0
+alpidem,ADM,False,False,JRTIDHTUMYMPRU,0,0,,0,0,0,0,,0,0,,0
+amiodarone,AM,True,False,IYIKLHRQXLHMJQ,0,0,0,0,0,0,,0,0,,,0
+amitriptyline,AMT,True,False,KRMDCWKBEZIMAB,0,0,0,0,0,0,,0,0,0,,0
+amphotericin B,AMB,True,True,APKFDSVGJQXUKY,0,,0,0,,0,,1,0,,0,0
+aspirin,ASA,True,False,BSYNRYMUTXBXSQ,0,0,0,0,0,0,0,0,0,0,0,0
+azathioprine,AZP,True,False,LMEKQMALGUDUQG,0,0,1,,0,0,0,1,0,0,,1
+bendazac,BDZ,True,False,BYFMCKSPFYVMOU,0,,0,0,0,0,0,0,0,0,0,0
+benzbromarone,BBr,True,False,WHQCHUCQKNIQEC,0,0,0,0,0,0,1,,0,,1,1
+benziodarone,BZD,True,False,CZCHIEJNWPNBDE,0,0,0,,,0,1,,,1,1,1
+bortezomib,BOR,True,False,GXJABQQUPOEUTA,0,0,0,1,,,,1,1,1,0,1
+bromobenzene,BBZ,True,True,QARVLSVVCXYDNA,0,0,0,0,0,0,0,0,0,0,0,0
+bucetin,BCT,True,True,LIAWQASKBFCRNR,0,0,0,0,0,0,0,0,0,0,0,0
+buspirone,BPR,False,False,QWCRAEMEVRGPNT,0,0,0,0,0,0,0,1,0,0,0,0
+caffeine,CAF,True,True,RYYVLZVUVIJVGH,0,0,0,0,0,0,0,0,0,0,0,0
+captopril,CAP,True,True,FAKRSMQSSFJEIM,,,,,,,,0,,0,,
+carbamazepine,CBZ,True,False,FFGPTBGBLSHEPO,1,1,0,0,0,0,0,0,0,0,0,0
+carbon tetrachloride,CCL4,True,False,VZGDMQKNWNREIO,0,0,0,0,0,0,0,0,0,0,0,0
+carboplatin,CBP,True,True,CCQPAEQGAVNNIA,0,0,0,0,0,0,0,1,0,0,,0
+cephalothin,CLT,True,True,XIURVHNZVLADCM,,,,,,,,,,1,,
+chloramphenicol,CMP,True,False,WIIZWVCIJKGZOK,0,0,0,0,0,0,0,0,0,0,0,0
+chlormadinone,CLM,True,False,VUHJZBBCZGVNDZ,1,1,0,,1,0,0,,0,,,0
+chlormezanone,CMN,True,False,WEQAYVWKMWHEJO,0,0,0,0,0,0,0,0,0,0,0,0
+chlorpheniramine,CHL,True,False,SOYKEARSMXGVTM,,0,0,,0,0,,0,0,0,0,0
+chlorpromazine,CPZ,True,False,ZPEIMTDSQAKGNT,0,0,0,0,,0,,,0,0,,1
+chlorpropamide,CPP,True,False,RKWGIWYCVPQPMF,0,0,0,0,0,0,0,0,0,0,0,0
+cimetidine,CIM,True,False,AQIXAKUUQRKLND,0,0,0,0,0,0,0,0,0,0,0,0
+ciprofloxacin,CPX,True,True,MYSWGUAQZAJSOK,0,0,0,0,0,0,0,,0,0,0,0
+cisplatin,CSP,True,True,QGZKDVFQNNGYKY,0,0,0,0,0,0,0,1,0,0,0,0
+clofibrate,CFB,True,True,KNHUKKLJHYUCFP,0,0,0,0,1,0,0,0,0,0,0,0
+clomipramine,CPM,True,False,GDLIGKIOYRNHDA,0,0,0,,0,0,,0,0,0,,0
+clozapine,CZP,False,False,QZUDBNBUXVUHMW,0,0,0,0,,0,,,0,0,,0
+colchicine,COL,True,False,IAKHMKGGTNLKSZ,0,,0,0,0,0,,1,1,0,1,0
+coumarin,CMA,True,False,ZYGHJZDHTFUPRJ,0,0,0,0,1,0,0,0,0,0,0,0
+cycloheximide,CHX,True,False,YPHMISFOHDHNIV,0,0,0,1,,0,,,,0,,1
+cyclophosphamide,CPA,True,True,CMSMOCZEIVJLDB,0,0,0,0,1,0,0,0,0,0,0,0
+cyclosporine A,CSA,True,True,PMATZTZNYRCHOR,0,,0,0,0,0,,1,0,0,,0
+danazol,DNZ,True,False,POZRVZJJTULAOH,1,1,0,1,1,1,0,,0,1,0,0
+dantrolene,DTL,True,False,OZOMQRBLCMDCEG,0,0,1,0,0,0,0,0,0,0,1,0
+desmopressin acetate,DDAVP,True,True,NFLWUMRGJYTJIN,0,0,0,0,0,0,0,0,0,0,0,0
+dexamethasone,DEX,True,False,UREBDLICKHMUKA,1,1,,,0,0,0,0,0,0,0,0
+diazepam,DZP,True,False,AAOVKJBEBIDNHE,0,0,0,,,0,0,0,1,0,0,0
+diclofenac,DFNa,True,False,DCOPUUMXTXDBNB,0,0,0,0,1,0,0,,0,0,0,1
+diethyl maleate,DEM,True,False,IEPRKVQEAMIZSS,0,0,0,0,0,0,0,1,0,0,0,0
+diltiazem,DIL,True,False,HSUGRBWQSSZJOP,0,0,0,0,0,,0,0,0,0,0,
+disopyramide,DIS,True,False,UVTNFZQICZKOEM,0,0,0,0,0,0,0,0,0,0,0,0
+disulfiram,DSF,True,False,AUZONCFQVSMFAP,0,1,1,,,0,1,,1,1,1,0
+doxorubicin,DOX,True,True,AOJJSUZBOXZQNB,0,1,0,1,0,1,0,1,1,0,1,1
+enalapril,ENA,True,True,GBXSMTUPTTWBMN,0,0,0,0,0,0,0,0,0,0,0,0
+erythromycin ethylsuccinate,EME,True,True,NSYZCCDSJNWWJL,0,0,0,0,0,0,0,,0,,0,0
+ethambutol,EBU,True,False,AEUTYOVWOVBAKS,0,0,0,0,0,0,0,0,0,0,0,0
+ethanol,ETN,True,False,LFQSCWFLJHTTHZ,0,0,0,0,0,0,0,0,0,0,0,0
+ethinylestradiol,EE,True,True,BFPYWIDHMRZLRN,0,1,0,0,1,1,0,0,0,1,1,1
+ethionamide,ETH,True,False,AEOCXXJPGCBFJA,0,0,0,0,1,0,0,0,0,0,0,0
+etoposide,ETP,True,False,VJJPUSNTGOMMGY,0,0,0,0,0,0,,,0,1,0,1
+famotidine,FAM,True,False,XUFQPHANEAPEMJ,0,0,0,0,0,0,0,0,0,0,0,0
+fenofibrate,FFB,True,False,YMTINGFKWWXKFG,0,0,0,0,0,0,0,,0,0,0,0
+fluoxetine hydrochloride,FLX,True,False,RTHCYVBBDHJXIQ,0,0,0,,,0,,0,0,0,,
+fluphenazine,FP,True,False,PLDUPXSUYLZYBN,0,0,,,0,0,,,0,,,
+flutamide,FT,True,False,MKXKFYHWDHIYRV,0,0,0,1,,0,0,1,0,0,1,0
+furosemide,FUR,True,False,ZZUFCTLCJUWOSV,0,0,0,0,1,0,0,0,0,0,0,0
+galactosamine,GaN,True,False,MSWZFWKMSRAUBD,0,0,0,0,1,0,0,0,0,0,0,0
+gefitinib,GEF,True,False,XGALLCVXEZPNRQ,0,0,1,,,0,0,1,0,0,,
+gemfibrozil,GFZ,True,False,HEMJJKBWTPKOJG,0,0,0,0,0,0,0,0,0,0,0,0
+glibenclamide,GBC,True,False,ZNNLBTZKUZBEKO,0,0,0,0,0,0,,,0,0,,0
+griseofulvin,GF,True,False,DDUHZTYCFQRHIY,0,0,0,1,0,0,1,,1,0,0,1
+haloperidol,HPL,True,False,LNEPOXFFQSENCJ,0,0,0,0,0,0,0,,0,0,,0
+hexachlorobenzene,HCB,True,True,CKAPSXZOOQJIBF,0,0,0,0,0,0,0,0,0,0,,0
+hydroxyzine,HYZ,True,False,ZQDWXGKKHFNSQK,0,0,0,0,0,0,0,0,0,0,,0
+ibuprofen,IBU,True,False,HEFNNWSXXWATRW,0,0,0,0,0,0,0,,0,,0,0
+"imatinib, methanesulfonate salt",IMA,True,False,KTUFNOKKBVMGRW,0,0,1,,0,0,0,,,0,1,0
+imipramine,IMI,True,True,BCGWQEUPMDMJNV,0,0,0,0,,0,,,0,0,,0
+indomethacin,IM,True,True,CGIGDMFJXJATDK,0,,0,0,0,0,1,0,0,0,0,0
+iproniazid,IPA,True,False,NYMGNSNKLVNMIA,0,0,,0,1,1,0,0,0,0,0,0
+isoniazid,INAH,True,False,QRXWMOHMRWLFEY,0,0,1,0,0,0,0,0,0,0,0,0
+ketoconazole,KC,True,True,XMAYWYJOQHXEEK,0,0,1,0,,0,0,1,0,1,,0
+labetalol,LBT,True,False,SGUAFYQXFOLMHL,0,0,0,0,0,0,0,,0,,0,0
+lomustine,LS,True,True,GQYIWUVLTXOXAJ,,,,,,,,0,,0,,
+mefenamic acid,MEF,True,False,HYYBABOKPJLUIN,0,,0,0,0,0,0,,0,0,,0
+meloxicam,MLX,True,False,ZRVUJXDFFKFLMG,1,0,0,0,1,0,0,0,0,0,1,0
+metformin,MFM,True,False,XZWYZXLIPXDOLR,0,0,0,,0,0,0,0,0,0,0,0
+methapyrilene,MP,True,False,HNJJXZKZRAWDPF,0,0,0,0,0,0,0,0,0,0,0,0
+methimazole,MTZ,True,False,PMRYVIKBURPHAH,0,0,0,0,0,0,0,0,0,1,0,0
+methyldopa,MDP,True,False,CJCSPKMFHVPWAR,0,0,0,0,0,0,0,0,0,0,0,0
+methyltestosterone,MTS,True,True,GCKMFJBGXUYNAG,1,1,0,0,1,1,0,,0,0,0,1
+mexiletine,MEX,True,False,VLPIATFUUWWMKC,0,0,0,0,0,0,0,0,0,0,0,0
+monocrotaline,MCT,True,True,QVCMHGGNRFRMAD,0,0,0,0,0,0,0,0,0,0,0,0
+moxisylyte,MXS,True,False,VRYMTAVOXVTQEF,0,0,0,0,0,0,0,0,0,0,0,0
+N-methyl-N-nitrosourea,MNU,True,False,ZRKWMRDKSOPRRS,0,0,0,0,0,0,0,0,0,1,0,0
+N-nitrosomorpholine,NMOR,True,False,ZKXDGKXYMTYWTB,0,0,0,0,0,0,0,0,0,0,0,0
+naproxen,NPX,True,False,CMWTZPSULFXXJA,0,0,0,0,0,0,0,0,0,0,0,0
+nefazodone,NZD,False,False,VRBKIVRKKCLPHA,0,0,,,,0,,,0,0,,0
+nicotinic acid,NIC,True,False,PVNIIMVLHYAWGP,0,0,0,0,0,0,0,0,0,0,0,0
+nifedipine,NIF,True,False,HYIMSNHJOBLJNT,0,0,1,1,0,0,0,0,0,0,0,0
+nimesulide,NIM,True,False,HYWYRSMBCFDLJT,0,0,0,0,0,0,0,0,0,0,1,0
+nitrofurantoin,NFT,True,True,NXFQHRVNIOXGAQ,0,,0,,0,0,,1,0,0,1,0
+nitrofurazone,NFZ,True,False,IAIWVQXQOWNYOU,0,0,0,0,0,0,0,1,0,0,1,0
+nitrosodiethylamine,DEN,True,False,WBNQDOYYEUMPFS,0,0,0,0,1,0,0,0,0,0,0,0
+omeprazole,OPZ,True,True,SUBDBMMJDZJVOS,0,0,1,0,,0,0,1,0,0,0,0
+papaverine,PAP,True,False,XQYZDYMELSJDRZ,0,0,,0,,0,0,1,0,0,,0
+pemoline,PML,True,False,NRNCYVBFPDDJNE,0,0,0,0,0,0,0,0,0,0,0,0
+perhexiline,PH,True,False,CYXKNKQEMFBLER,0,,,,,,,,,,1,
+phenacetin,PCT,True,True,CPJSUEIXXCENMM,0,0,0,0,0,0,0,0,0,0,0,0
+phenobarbital,PB,True,False,DDBREPKUVSBGFI,0,0,0,0,0,0,0,0,0,0,0,0
+phenylbutazone,PhB,True,True,VYMDGNCVAMGZFE,0,0,0,0,0,0,0,0,0,0,1,0
+phenytoin,PHE,True,False,CXOFVDLJLONNDW,0,0,0,0,0,0,0,0,0,0,0,0
+phorone,PHO,True,False,MTZWHHIREPJPTG,0,0,0,0,0,0,0,0,0,0,0,0
+promethazine,PMZ,True,False,PWWVAXIEGOYWEE,0,0,0,0,0,0,0,0,0,0,,0
+propranolol,PPL,True,False,AQHHHDLHHXJYJD,0,0,,0,0,0,0,0,0,0,,0
+propylthiouracil,PTU,True,False,KNAHARQHSZJURB,0,0,0,0,1,0,0,0,0,0,0,0
+quinidine,QND,True,False,LOUPRKONTZGTKE,0,0,1,0,0,0,0,,0,0,0,0
+ranitidine,RAN,True,False,VMXUWOKSQNHOCA,0,0,0,0,0,0,0,0,0,0,0,0
+rifampicin,RIF,True,True,JQXXHWHPUNPDRT,0,0,0,0,0,0,0,0,0,0,1,0
+rosiglitazone maleate,RGZ,True,False,YASAKCUCGLMORW,0,,0,0,0,0,1,1,0,0,1,0
+rotenone,ROT,True,False,JUVIOZPCNVVQFO,0,0,0,,,0,,1,0,0,,1
+simvastatin,SST,True,False,RYMZZMVNJRMUDD,1,0,0,1,1,0,0,1,0,,,0
+sulfasalazine,SS,True,False,NCEXYHBECQHGNR,0,0,0,0,0,0,0,0,0,0,0,0
+sulindac,SUL,True,False,MLKXDPUZXIRXEP,0,0,1,0,0,0,0,1,0,0,0,0
+sulpiride,SLP,True,False,BGRJTUBHPOOWDU,0,0,,0,0,0,0,0,0,0,,0
+tacrine,TAC,True,False,YLJREFDVOIBQDA,0,0,1,0,1,0,0,0,0,0,0,0
+tamoxifen,TMX,True,False,NKANXQFJJICGDU,0,0,0,1,1,1,0,,0,,,
+tannic acid,TAN,True,False,LRBQNJMCXXYXIU,1,0,1,,0,0,,1,1,,1,1
+terbinafine,TBF,True,False,DOMXUEMWDBAQBQ,0,0,0,0,0,0,0,,0,0,0,0
+theophylline,TEO,True,False,ZFXYFBGIUFBOJW,0,0,0,0,1,0,0,0,0,0,0,0
+thioacetamide,TAA,True,True,YUKQRDCYNOVPGJ,0,0,,0,0,0,0,0,0,0,0,0
+thioridazine,TRZ,True,False,KLBQZWRITKRQQV,0,0,0,,,0,,,,0,,
+ticlopidine,TCP,True,False,PHWBOXQYWZNQIN,0,0,0,0,1,1,0,0,0,0,,0
+tiopronin,TIO,True,False,YTGJWQPHMWSCST,0,0,0,0,0,0,0,0,0,0,0,0
+tolbutamide,TLB,True,False,JLRGJRBPOGGCBT,0,0,0,0,0,0,0,0,0,0,0,0
+triamterene,TRI,True,True,FNYLWPVRPXGIIP,0,,1,,1,,,,1,,0,1
+triazolam,TZM,True,False,JOFWLTCLBGQGBO,0,0,0,0,,0,0,,0,,0,0
+trimethadione,TMD,True,False,IRYJRGCIQBGHIV,0,0,0,0,0,0,0,0,0,0,0,0
+valproic acid,VPA,True,True,NIJJYAXOARWZEE,0,0,0,0,0,0,0,0,0,0,0,0
+venlafaxine,VLF,False,False,PNVNVHUZROJLTJ,0,0,0,0,0,0,0,0,0,0,0,0
+vitamin A,VA,True,False,FPIPGXGPPPQFEQ,0,0,0,1,0,0,0,1,0,1,1,0
+WY-14643,WY,True,False,SZRPDCCEHVWOJX,0,,0,0,0,0,1,,0,0,0,0

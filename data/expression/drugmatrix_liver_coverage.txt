@@ -1,0 +1,7 @@
+GSE57815 DrugMatrix Affymetrix liver
+  total samples parsed : 2218
+  kept (cohort+ctrl)   : 2178
+  vehicle controls     : 279
+  probes               : 31099
+  distinct treated cpd : 195
+  -> labelled compounds covered : 177 / 613
