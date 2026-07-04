@@ -68,33 +68,42 @@ truth about the rat.
 
 We ran the controlled comparison (identical everything except the feature block: structure only /
 expression only / fusion), **leakage-safe** — repeated stratified CV, every data-dependent transform
-(PCA, scalers, ComBat) fit on the training fold only — then stress-tested the headline three ways.
-**The finding did not replicate.**
+(PCA, scalers, ComBat) fit on the training fold only — then stress-tested the headline four ways.
+**The headline held only under a linear head at N=177; pooling a second dataset revealed the real
+bottleneck is cross-dataset comparability, not sample size.**
 
-| Stage | Setup | Fusion vs structure | SR ΔAUC | SR-vs-NR |
-|---|---|---|---|---|
-| First run | N=177, DrugMatrix liver, **logistic** head | +0.009 macro (0.766 vs 0.757) | **+0.025** | p=0.074 |
-| Baseline 2 | N=177, **GBM** head (chemprop stand-in) | **−0.010** macro | −0.016 | — |
-| Plan A | **N=256** (+TG-GATEs repeat-dose, ComBat) | 0.756 macro (**−0.010 vs N=177**) | **+0.013** | p=0.27 |
+| Stage | Setup | Fusion macro | SR ΔAUC | ComBat r | SR-vs-NR |
+|---|---|---|---|---|---|
+| First run | N=177, DrugMatrix liver, **logistic** head | 0.766 (vs 0.757) | **+0.025** | — | p=0.074 |
+| Baseline 2 | N=177, **GBM** head (chemprop stand-in) | 0.723 (**−0.010**) | −0.016 | — | — |
+| Plan A · single-dose | N=256, +TG-GATEs **hours** (mismatched), ComBat | 0.752 | +0.001 | 0.38 | p=0.38 |
+| Plan A · repeat-dose | N=256, +TG-GATEs **days** (time-matched), ComBat | 0.756 | **+0.013** | **0.44** | p=0.27 |
 
 At N=177 with a linear head, fusion adds a small benefit concentrated in the **stress-response (SR)**
-assays (SR-p53, SR-MMP, PPAR-γ) and neutral-to-negative on receptor-**binding** endpoints — an
-appealing "expression sees stress programs that structure can't" story. But that signal **reverses
-under a stronger nonlinear head** (Baseline 2, gradient-boosted trees) and **falls by half to non-significance when the
-second data source is added** (Plan A: SR ΔAUC +0.025 → +0.013; SR-vs-NR p=0.074 → 0.27; fusion macro
-0.766 → 0.756). The ComBat alignment itself worked — 79 TG-GATEs compounds merged cleanly onto the
-DrugMatrix reference — the *effect* just isn't robust.
+assays (SR-p53, SR-MMP, PPAR-γ) and neutral-to-negative on receptor-**binding** endpoints — "expression
+sees stress programs that structure can't." That signal **reverses under a stronger nonlinear head**
+(Baseline 2, gradient-boosted trees, which overfits at N=177) and **washes out when a *mismatched*
+second source is pooled** (single-dose, exposure = hours: SR +0.025 → +0.001, cross-dataset agreement
+r=0.38). But the **fair, time-matched test** — TG-GATEs *repeat-dose* (exposure = days, bracketing
+DrugMatrix's ≤7 d) — **recovers it partway** (SR → +0.013, agreement r=0.44). The recovered signal
+*tracks* the agreement: 0.38 → 0.44 ⇒ +0.001 → +0.013.
 
-**Honest conclusion:** the apparent SR-specific gain was largely a **small-sample / single-source /
-linear-head artifact**. A stronger classifier reverses it; adding a second source halves it to non-significance. That only becomes
-visible if you actually run the robustness checks — which is the point.
+**Honest conclusion:** the bottleneck is **cross-dataset comparability, not sample size.** More data
+didn't help; better-*matched* data helped partially, in proportion to how comparable it was. Even
+carefully harmonised, same-platform rat liver signatures for identical molecules top out at **r ≈ 0.44**
+— a measured, in-rat preview of the animal→human translational gap. The clean **N=177** result stays
+the primary evidence; the three-point pooling experiment (177 / hours-256 / days-256) is the supporting
+story. **Full per-result detail and reasoning: [RESULTS.md](RESULTS.md).**
 
 Per-stage numbers:
 [`results_table.csv`](data/results/results_table.csv) (N=177 three-arm),
 [`baseline2.csv`](data/results/baseline2.csv) (logistic vs GBM head),
 [`sr_vs_nr.txt`](data/results/sr_vs_nr.txt) (SR-vs-NR test),
 [`pc_sweep.csv`](data/results/pc_sweep.csv) (PCA-component sweep),
-[`results_combined.csv`](data/results/results_combined.csv) (per-assay N=177 → N=256).
+[`results_combined_singledose.csv`](data/results/results_combined_singledose.csv) +
+[`results_combined_repeat.csv`](data/results/results_combined_repeat.csv) (per-assay N=177 → N=256,
+hours vs days), pipeline logs in [`data/results/logs/`](data/results/logs/). Full narrative:
+**[RESULTS.md](RESULTS.md)**.
 
 ## Files
 
@@ -183,10 +192,12 @@ points at — `drugmatrix_liver_logfc.parquet` + `labels.csv` for N=177, `combin
 
 ## Next steps
 
-The single-source signal didn't survive, so the next moves sharpen the test rather than declare
-victory:
+Comparability — not data volume — is the bottleneck, so the next moves sharpen the test:
 1. **Stronger structure arm** — swap ECFP4 → ChemBERT (a torch-env drop-in behind the same
-   `featurize()` contract) to confirm the null holds against a stronger structure encoder.
-2. **More data** — repeat-dose TG-GATEs and DrugMatrix's other tissues, beyond the liver single-dose set.
+   `featurize()` contract) to confirm the pattern holds against a stronger structure encoder.
+2. **Better harmonisation** — go beyond ComBat (the r≈0.44 ceiling), e.g. tissue/time as covariates
+   or a learned rat→rat alignment, before pooling. *(Done: repeat-dose day-matching, which lifted
+   r 0.38 → 0.44.)*
 3. **Harder target** — move from Tox21 mechanism priors toward clinical failure labels (DILIrank,
-   ClinTox, WITHDRAWN), where in-vivo transcriptomics may carry signal structure genuinely lacks.
+   DILIst, withdrawal lists), where in-vivo transcriptomics may carry signal structure genuinely
+   lacks. *(This is the retrospective-validation plan now underway.)*
