@@ -67,6 +67,25 @@ Scripts (run from `data/`):
 - `scripts/intersect.py` — print all overlap statistics
 - `scripts/build_master.py` — assemble `master_cohort.csv`
 
+## Reproducing the data (large files not in this repo)
+
+The raw + processed expression matrices are intentionally **not committed** (size + third-party
+redistribution terms). The repo ships the code, the linkage cohort, the small derived tables and
+the results table; everything else regenerates from **one public download**. Full instructions and
+the list of datasets to fetch are in **[DATA.md](DATA.md)**.
+
+```bash
+pip install -r requirements.txt
+mkdir -p data/_raw
+curl -L -o data/_raw/GSE57815_series_matrix.txt.gz \
+  https://ftp.ncbi.nlm.nih.gov/geo/series/GSE57nnn/GSE57815/matrix/GSE57815_series_matrix.txt.gz
+python scripts/retrieve_expression.py && python scripts/build_signatures.py && python scripts/run_experiment.py
+```
+
+The modeling scripts (`retrieve_expression`, `build_signatures`, `expr_embed`, `structure_embed`,
+`run_experiment`) sit alongside the curation scripts listed above; `run_experiment.py` produces
+`data/results/results_table.csv` (structure vs expression vs fusion, leakage-safe).
+
 ## Method notes
 
 - **Standardization**: RDKit `Cleanup` → `LargestFragmentChooser` (desalt) →

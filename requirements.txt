@@ -1,0 +1,13 @@
+# Reproduce the pipeline on Python 3.11.
+# No GPU / PyTorch needed for the default ECFP4 structure encoder.
+# Versions below are the tested set; relax to >= if your platform lacks a wheel.
+pandas==3.0.3
+numpy==2.4.6
+scikit-learn==1.9.0
+scipy==1.17.1
+pyarrow==24.0.0
+rdkit            # tested with 2025.09.3
+
+# Optional — only for the planned ChemBERT structure encoder (Intel-mac: pin torch==2.2.2, or use onnxruntime):
+# torch==2.2.2
+# transformers
