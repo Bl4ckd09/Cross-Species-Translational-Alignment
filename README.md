@@ -1,28 +1,3 @@
----
-pretty_name: Cross-Species Translational Alignment (TG-GATEs + DrugMatrix × Tox21)
-license: cc-by-4.0
-tags:
-  - toxicology
-  - toxicogenomics
-  - drug-discovery
-  - cheminformatics
-  - tox21
-  - dili
-  - transcriptomics
-  - cross-species
-task_categories:
-  - tabular-classification
-size_categories:
-  - n<1K
-configs:
-  - config_name: master_cohort
-    data_files: master_cohort.csv
-  - config_name: results_tox21
-    data_files: data/results/results_table.csv
-  - config_name: results_dili
-    data_files: data/results/validation_b.csv
----
-
 # Cross-Species Translational Alignment — TG-GATEs + DrugMatrix × Tox21
 
 Goal: build a training substrate for detecting **subtle / pre-histopathological
