@@ -64,9 +64,11 @@ def head(penalty, C):
     # ~0.97 zero-coefficient fraction vs ~0.38 for L2). sklearn 1.9's `penalty` deprecation is
     # cosmetic — saga would give the same objective but ~90x slower and needs many more iters.
     if penalty == "l1":
+        # random_state IS required: liblinear shuffles during coordinate descent, so without a
+        # fixed seed the L1 fit is non-deterministic (~0.2 coef drift, ~0.002 macro-AUC wobble).
         return LogisticRegression(max_iter=5000, class_weight="balanced", C=C,
-                                  penalty="l1", solver="liblinear")
-    return LogisticRegression(max_iter=3000, class_weight="balanced", C=C)  # L2 (lbfgs default)
+                                  penalty="l1", solver="liblinear", random_state=0)
+    return LogisticRegression(max_iter=3000, class_weight="balanced", C=C)  # L2 (lbfgs, deterministic)
 
 
 def fit_masked(mk_clf, Xtr, ytr):
