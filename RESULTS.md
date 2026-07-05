@@ -176,11 +176,11 @@ the classical **strong** Tox21 structure representation — substructure **count
 |---|--:|--:|--:|--:|--:|
 | binary ECFP4 → PCA-128, L2 (reference) | 0.757 | 0.766 | +0.009 | +0.025 | −0.000 |
 | **counts+physchem → PCA-128, L2** | **0.763** | **0.776** | +0.014 | +0.019 | +0.010 |
-| counts+physchem raw (2066-d), **L1** | 0.725 | 0.727 | +0.002 | +0.003 | +0.000 |
+| counts+physchem raw (2066-d), **L1** | 0.727 | 0.727 | +0.001 | +0.002 | −0.000 |
 
 **Why.** (a) The richer representation lifts structure only **+0.006** (0.757 → 0.763) — well inside the
-±0.03 CI, so a "better baseline" barely moves the ceiling. (b) The **L1 sparse head is *worse*** (0.725):
-at N=177 you cannot estimate 2066 sparse coefficients, so L1 throws away distributed signal that PCA keeps
+±0.03 CI, so a "better baseline" barely moves the ceiling. (b) The **L1 sparse head is *worse*** (0.727 <
+0.763): at N=177 you cannot estimate 2066 sparse coefficients, so L1 throws away distributed signal PCA keeps
 — this **refutes** the intuition (flagged in the overview's "cheap next try") that L1 would recover the rare
 toxicophores PCA truncates. **N is the ceiling, not the encoder.** (c) The GE benefit **survives the
 stronger baseline** — fusion still beats structure (+0.014 macro) and still tilts SR (+0.019) over NR (+0.010).

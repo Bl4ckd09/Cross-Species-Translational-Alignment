@@ -102,8 +102,13 @@ bottleneck is cross-dataset comparability, not sample size.**
 |---|---|---|---|---|---|
 | First run | N=177, DrugMatrix liver, **logistic** head | 0.766 (vs 0.757) | **+0.025** | — | p=0.074 |
 | Baseline 2 | N=177, **GBM** head (chemprop stand-in) | 0.723 (**−0.010**) | −0.016 | — | — |
+| Richer structure | N=177, **ECFP-counts + physchem** + L2 (L1 *worse*) | 0.776 (vs 0.763) | +0.019 | — | — |
+| Multitask MLP | N=177, shared-trunk net, 12 heads (torch) | 0.680 (vs 0.622) | +0.060 † | — | — |
 | Plan A · single-dose | N=256, +TG-GATEs **hours** (mismatched), ComBat | 0.752 | +0.001 | 0.38 | p=0.38 |
 | Plan A · repeat-dose | N=256, +TG-GATEs **days** (time-matched), ComBat | 0.756 | **+0.013** | **0.44** | p=0.27 |
+
+† The MLP's ΔAUC is **not** SR-specific (NR +0.057 ≈ SR +0.060) — the net adds expression roughly
+uniformly; only the linear head produces the clean SR>NR split. See RESULTS.md §5c–5d.
 
 At N=177 with a linear head, fusion adds a small benefit concentrated in the **stress-response (SR)**
 assays (SR-p53, SR-MMP, PPAR-γ) and neutral-to-negative on receptor-**binding** endpoints — "expression
@@ -113,6 +118,14 @@ second source is pooled** (single-dose, exposure = hours: SR +0.025 → +0.001, 
 r=0.38). But the **fair, time-matched test** — TG-GATEs *repeat-dose* (exposure = days, bracketing
 DrugMatrix's ≤7 d) — **recovers it partway** (SR → +0.013, agreement r=0.44). The recovered signal
 *tracks* the agreement: 0.38 → 0.44 ⇒ +0.001 → +0.013.
+
+We also gave structure its best classical shot and finally ran the deferred neural net: a **richer
+ECFP-counts + physchem** structure baseline lifts structure only +0.006 (0.757 → 0.763, within the CI;
+an L1 sparse head is *worse* — N=177 can't fit 2066 sparse coefficients), and a **regularised multitask
+MLP** is worse on every arm (structure 0.622, fusion 0.680) and blurs the SR>NR split. The SR-tilted
+benefit **survives** the stronger structure baseline (fusion 0.776, SR +0.019 > NR +0.010), and both
+checks confirm the per-assay **linear head is structure at its best here** — the model under which the
+mechanism stays legible. **N is the ceiling, not the encoder or the head** (RESULTS.md §5c–5d).
 
 **Honest conclusion:** the bottleneck is **cross-dataset comparability, not sample size.** More data
 didn't help; better-*matched* data helped partially, in proportion to how comparable it was. Even
@@ -124,6 +137,8 @@ story. **Full per-result detail and reasoning: [RESULTS.md](RESULTS.md).**
 Per-stage numbers:
 [`results_table.csv`](data/results/results_table.csv) (N=177 three-arm),
 [`baseline2.csv`](data/results/baseline2.csv) (logistic vs GBM head),
+[`structure_rich.csv`](data/results/structure_rich.csv) (ECFP-counts + physchem + L1),
+[`mlp_results.csv`](data/results/mlp_results.csv) (multitask MLP),
 [`sr_vs_nr.txt`](data/results/sr_vs_nr.txt) (SR-vs-NR test),
 [`pc_sweep.csv`](data/results/pc_sweep.csv) (PCA-component sweep),
 [`results_combined_singledose.csv`](data/results/results_combined_singledose.csv) +
@@ -156,6 +171,8 @@ Modeling & experiment scripts:
 - `scripts/expr_embed.py` — expression → PCA latent (swappable `embed()`; future rat→human drop-in)
 - `scripts/run_experiment.py` — the controlled structure / expr / fusion comparison → `results_table.csv`
 - `scripts/baseline2.py` — logistic vs GBM head robustness check → `baseline2.csv`
+- `scripts/run_structure_rich.py` — stronger structure baseline (ECFP-counts + physchem, L1 vs L2) → `structure_rich.csv`
+- `scripts/run_mlp.py` — the deferred regularised multitask MLP (needs torch) → `mlp_results.csv`
 - `scripts/sweep_and_stats.py` — PCA-component sweep + formal SR-vs-NR test → `pc_sweep.csv`, `sr_vs_nr.txt`
 - `scripts/rma_tggates.R` — RMA-normalise the TG-GATEs liver CELs (R + `affy`)
 - `scripts/build_tggates_signatures.py` — TG-GATEs logFC signatures
@@ -218,14 +235,22 @@ points at — `drugmatrix_liver_logfc.parquet` + `labels.csv` for N=177, `combin
 
 ## Next steps
 
-Comparability — not data volume — is the bottleneck, so the next moves sharpen the test:
-1. **Stronger structure arm** — *done*: swapped ECFP4 → ChemBERT (`STRUCT_KIND=chembert`). Frozen
-   ChemBERT is actually *weaker* than ECFP for these tox tasks (Tox21 0.68 vs 0.76; DILI 0.59 vs
-   0.70), so ECFP was the stronger baseline and the conclusions hold under both (see RESULTS.md §5b).
-   A *fine-tuned* transformer remains the open follow-up.
-2. **Better harmonisation** — go beyond ComBat (the r≈0.44 ceiling), e.g. tissue/time as covariates
-   or a learned rat→rat alignment, before pooling. *(Done: repeat-dose day-matching, which lifted
-   r 0.38 → 0.44.)*
-3. **Harder target** — move from Tox21 mechanism priors toward clinical failure labels (DILIrank,
-   DILIst, withdrawal lists), where in-vivo transcriptomics may carry signal structure genuinely
-   lacks. *(This is the retrospective-validation plan now underway.)*
+Comparability — not data volume or model capacity — is the bottleneck, so the highest-leverage next
+move is a **learned rat→human translation layer** (RESULTS.md §11): align rat transcriptional responses
+into a human-toxicity space through the swappable `embed()` drop-in, in three tiers — linear CORAL/OT →
+contrastive/domain-adversarial encoder → pathway-level translation. **Falsifiable ask:** lift the
+human-DILI *expression* arm from chance (0.52) toward structure (0.70), and help SR over NR. That is
+where the animal→human gap actually lives, and the pipeline is already built to receive the fix.
+
+Modeling is now **exhausted as a lever** — every attempt to out-model N=177 was tried and confirmed the setup:
+1. **Structure arm** — *done, every direction*: ChemBERT (`STRUCT_KIND=chembert`) is *weaker* than ECFP
+   (Tox21 0.68 vs 0.76; DILI 0.59 vs 0.70, §5b); richer ECFP-counts + physchem lifts it only +0.006 and
+   an L1 head is *worse* (§5c). ECFP-logistic is the strong, conservative baseline; a *fine-tuned*
+   transformer is the one open modeling follow-up.
+2. **Model head** — *done*: GBM overfits (§5); a regularised multitask MLP is worse on every arm and
+   blurs SR>NR (§5d). The per-assay linear head is best at this N.
+3. **Better harmonisation** — go beyond ComBat (the r≈0.44 ceiling), e.g. tissue/time as covariates or a
+   learned rat→rat alignment, before pooling. *(Done: repeat-dose day-matching lifted r 0.38 → 0.44.)*
+4. **Harder target** — clinical failure labels (DILIrank, DILIst, withdrawal) over Tox21 priors, where
+   in-vivo transcriptomics may carry signal structure lacks. *(Done: retrospective validation —
+   structure wins on DILI; biology edges withdrawal, but noisily.)*

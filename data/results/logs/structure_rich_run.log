@@ -1,0 +1,40 @@
+loaded: 177 compounds | 2066 structure features (2048 counts + physchem)
+
+        assay panel n_active  struct_pca_L2_AUC  struct_raw_L1_AUC  expr_L2_AUC  fusion_pca_L2_AUC  fusion_raw_L1_AUC
+        NR-AR    NR       28              0.802              0.787        0.686              0.796              0.785
+    NR-AR-LBD    NR       25              0.904              0.828        0.738              0.884              0.831
+       NR-AhR    NR       30              0.833              0.807        0.673              0.845              0.800
+ NR-Aromatase    NR       25              0.747              0.737        0.594              0.747              0.731
+        NR-ER    NR       39              0.649              0.679        0.652              0.670              0.682
+    NR-ER-LBD    NR       23              0.927              0.829        0.797              0.918              0.822
+NR-PPAR-gamma    NR       12              0.712              0.532        0.727              0.786              0.545
+       SR-ARE    SR       48              0.676              0.701        0.611              0.676              0.702
+     SR-ATAD5    SR       14              0.825              0.758        0.656              0.831              0.760
+       SR-HSE    SR       17              0.535              0.558        0.576              0.558              0.549
+       SR-MMP    SR       34              0.799              0.789        0.737              0.834              0.794
+       SR-p53    SR       32              0.741              0.716        0.704              0.774              0.727
+        MACRO                             0.763              0.727        0.679              0.776              0.727
+      SR_mean                             0.715              0.704        0.657              0.734              0.706
+      NR_mean                             0.796              0.743        0.695              0.807              0.742
+
+STRUCTURE-RICH probe  (N=177 DrugMatrix liver, 10x5 CV, C=1.0)
+features: 2048 substructure COUNTS + 18 physchem descriptors
+
+MACRO ROC-AUC:
+  struct_pca_L2    0.763
+  struct_raw_L1    0.727
+  expr_L2          0.679
+  fusion_pca_L2    0.776
+  fusion_raw_L1    0.727
+
+reference (binary ECFP4 -> PCA-128, L2):  structure 0.757  fusion 0.766
+
+== Q(a) did a richer structure baseline raise the ceiling? ==
+  struct_raw_L1 - struct_pca_L2  (macro) = -0.036
+  best structure macro AUC              = 0.763
+
+== Q(b) does GE still add — and still on SR? ==
+  fusion_pca_L2 - struct_pca_L2   macro=+0.014  SR=+0.019  NR=+0.010
+  fusion_raw_L1 - struct_raw_L1   macro=+0.001  SR=+0.002  NR=-0.000
+
+wrote /Users/sunhwang/Downloads/training_data/data/results/structure_rich.csv  and  structure_rich.txt
