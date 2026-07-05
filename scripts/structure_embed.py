@@ -56,6 +56,59 @@ def _ecfp4(connectivities, c2smi, n_bits=2048, radius=2):
     return np.vstack(rows), [f"ecfp_{i}" for i in range(n_bits)]
 
 
+# --------------------------- ECFP-counts + physchem ---------------------------
+# The stronger classical Tox21 structure baseline: substructure *counts* (not just
+# presence/absence) concatenated with interpretable physicochemical descriptors.
+# Pairs naturally with an L1 head that selects the handful of bits/descriptors that
+# actually carry each assay. Standardisation is left to the downstream (in-fold) scaler.
+_PHYSCHEM = [
+    ("MolWt",            "MolWt"),
+    ("MolLogP",          "MolLogP"),
+    ("TPSA",             "TPSA"),
+    ("NumHDonors",       "NumHDonors"),
+    ("NumHAcceptors",    "NumHAcceptors"),
+    ("NumRotatableBonds","NumRotatableBonds"),
+    ("NumAromaticRings", "NumAromaticRings"),
+    ("FractionCSP3",     "FractionCSP3"),
+    ("NumHeteroatoms",   "NumHeteroatoms"),
+    ("RingCount",        "RingCount"),
+    ("NumSaturatedRings","NumSaturatedRings"),
+    ("NumAliphaticRings","NumAliphaticRings"),
+    ("HeavyAtomCount",   "HeavyAtomCount"),
+    ("NHOHCount",        "NHOHCount"),
+    ("NOCount",          "NOCount"),
+    ("LabuteASA",        "LabuteASA"),
+    ("BertzCT",          "BertzCT"),
+    ("qed",              "qed"),
+]
+
+def _ecfp_counts(connectivities, c2smi, n_bits=2048, radius=2):
+    from rdkit import Chem
+    from rdkit.Chem import AllChem, Descriptors
+    gen = AllChem.GetMorganGenerator(radius=radius, fpSize=n_bits)
+    descs = {name: getattr(Descriptors, fn) for name, fn in _PHYSCHEM}
+    fp_rows, ph_rows = [], []
+    for c in connectivities:
+        smi = c2smi.get(c)
+        mol = Chem.MolFromSmiles(smi) if smi else None
+        if mol is None:
+            fp_rows.append(np.zeros(n_bits, "float32"))
+            ph_rows.append(np.zeros(len(_PHYSCHEM), "float32"))
+            continue
+        fp_rows.append(gen.GetCountFingerprintAsNumPy(mol).astype("float32"))
+        vals = []
+        for name in descs:
+            try:
+                v = float(descs[name](mol))
+            except Exception:
+                v = 0.0
+            vals.append(0.0 if (v != v or v in (float("inf"), float("-inf"))) else v)
+        ph_rows.append(np.array(vals, "float32"))
+    mat = np.hstack([np.vstack(fp_rows), np.vstack(ph_rows)])
+    cols = [f"cnt_{i}" for i in range(n_bits)] + [f"phys_{name}" for name, _ in _PHYSCHEM]
+    return mat, cols
+
+
 # ------------------------------ ChemBERT backend ------------------------------
 def _chembert(connectivities, c2smi, model_name=CHEMBERT_MODEL, batch_size=64, max_len=256):
     """Frozen ChemBERTa mean-pooled embeddings. Requires torch + transformers."""
@@ -98,7 +151,8 @@ def _chembert(connectivities, c2smi, model_name=CHEMBERT_MODEL, batch_size=64, m
 # --------------------------------- dispatch -----------------------------------
 def featurize(connectivities, kind="ecfp4", **kw):
     connectivities = list(connectivities)
-    tag = {"ecfp4": "ecfp4_2048", "chembert": CHEMBERT_MODEL.split("/")[-1]}[kind]
+    tag = {"ecfp4": "ecfp4_2048", "ecfp_counts": "ecfp_counts_2048_physchem",
+           "chembert": CHEMBERT_MODEL.split("/")[-1]}[kind]
     cache = os.path.join(CACHE, f"structure_{tag}.parquet")
     if os.path.exists(cache):
         df = pd.read_parquet(cache)
@@ -108,6 +162,8 @@ def featurize(connectivities, kind="ecfp4", **kw):
     c2smi = _smiles_map()
     if kind == "ecfp4":
         mat, cols = _ecfp4(connectivities, c2smi, **kw)
+    elif kind == "ecfp_counts":
+        mat, cols = _ecfp_counts(connectivities, c2smi, **kw)
     elif kind == "chembert":
         mat, cols = _chembert(connectivities, c2smi, **kw)
     else:

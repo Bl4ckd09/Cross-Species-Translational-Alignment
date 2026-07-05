@@ -1,0 +1,28 @@
+{
+  "config": {
+    "n_pca_expr": 100,
+    "n_pca_struct": 128,
+    "folds": 5,
+    "repeats": 10,
+    "C": 1.0,
+    "seed0": 1000,
+    "signatures": "drugmatrix_liver_logfc.parquet",
+    "labels": "labels.csv"
+  },
+  "n_compounds": 177,
+  "n_struct_features": 2066,
+  "assays": [
+    "NR-AR",
+    "NR-AR-LBD",
+    "NR-AhR",
+    "NR-Aromatase",
+    "NR-ER",
+    "NR-ER-LBD",
+    "NR-PPAR-gamma",
+    "SR-ARE",
+    "SR-ATAD5",
+    "SR-HSE",
+    "SR-MMP",
+    "SR-p53"
+  ]
+}

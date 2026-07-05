@@ -1,0 +1,19 @@
+STRUCTURE-RICH probe  (N=177 DrugMatrix liver, 10x5 CV, C=1.0)
+features: 2048 substructure COUNTS + 18 physchem descriptors
+
+MACRO ROC-AUC:
+  struct_pca_L2    0.763
+  struct_raw_L1    0.725
+  expr_L2          0.679
+  fusion_pca_L2    0.776
+  fusion_raw_L1    0.727
+
+reference (binary ECFP4 -> PCA-128, L2):  structure 0.757  fusion 0.766
+
+== Q(a) did a richer structure baseline raise the ceiling? ==
+  struct_raw_L1 - struct_pca_L2  (macro) = -0.038
+  best structure macro AUC              = 0.763
+
+== Q(b) does GE still add — and still on SR? ==
+  fusion_pca_L2 - struct_pca_L2   macro=+0.014  SR=+0.019  NR=+0.010
+  fusion_raw_L1 - struct_raw_L1   macro=+0.002  SR=+0.003  NR=+0.000

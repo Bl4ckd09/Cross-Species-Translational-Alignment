@@ -237,6 +237,21 @@
   .lim{border:1px solid var(--line);border-left:3px solid var(--caveat);border-radius:8px;padding:.85rem 1rem;background:var(--surface)}
   .lim b{font-size:.92rem} .lim p{font-size:.85rem;color:var(--muted);margin:.25rem 0 0}
 
+  /* next step — the funded ask */
+  .nextgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin:1.4rem 0}
+  .tier{border:1px solid var(--line);border-top:3px solid var(--purple);border-radius:10px;
+    padding:1rem 1.1rem;background:var(--surface)}
+  .tier .tnum{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--purple-ink);font-weight:600}
+  .tier .tname{font-family:var(--serif);font-size:1.12rem;color:var(--ink);margin-top:.15rem}
+  .tier .tcost{font-family:var(--mono);font-size:.72rem;color:var(--faint);margin:.15rem 0 .55rem}
+  .tier p{font-size:.86rem;color:var(--muted);margin:0;line-height:1.5}
+  .predict{margin-top:1.1rem;background:var(--purple-wash);border:1px solid var(--line-strong);
+    border-radius:10px;padding:1.1rem 1.25rem}
+  .predict .eyebrow{color:var(--purple-ink)}
+  .predict p{margin:.5rem 0 0;color:var(--ink);font-size:.96rem;line-height:1.55}
+  .predict .mono{font-family:var(--mono);color:var(--purple-ink);font-weight:600}
+
   footer{padding:clamp(2.4rem,4vw,3.4rem) 0 4rem}
   .foot-grid{display:flex;justify-content:space-between;gap:2rem;flex-wrap:wrap;align-items:flex-start}
   .foot-grid p{font-size:.85rem;color:var(--muted);max-width:44ch}
@@ -509,11 +524,29 @@ logFC · 31k probes <span class="op">──►</span> <span class="ex">PCA·100<
           literature-appropriate baseline, not a weak one. It fires especially cleanly here because SR toxicity is
           driven by <em>reactive structural alerts</em> — the very substructures ECFP enumerates and a fingerprint
           was built for.</p>
-        <div class="trynote"><span class="lbl">Cheap next try · no torch</span>
-          Not a new encoder — <code>raw ECFP-counts + RDKit physchem → sparse (L1) head</code>, skipping the PCA
-          step that truncates <b>rare toxicophores</b> (low-variance bits set in only a few compounds). Expect a
-          small lift, quite possibly <em>within</em> the ±0.04 CI. The encoder only sets how strong the baseline
-          is; <b>N is the ceiling</b> — the real levers stay data comparability and the rat→human layer.</div>
+        <div class="trynote"><span class="lbl">Ran it → next card</span>
+          That "cheap next try" (<code>ECFP-counts + physchem + L1</code>) and the deferred neural net were both
+          run — see the next card. Short version: <b>N is the ceiling, not the encoder or the head.</b></div>
+      </article>
+
+      <article class="result">
+        <div class="result-head"><span class="rtag">R5c · R5d</span><span class="pill signal">Choice validated</span></div>
+        <h3>We gave structure its best shot — and finally ran the deferred neural net. Both confirm the setup.</h3>
+        <p class="lede">Two "did we under-model this?" probes: a richer counts+physchem structure baseline, and
+          the regularized multitask MLP the torch env had blocked. Neither overturns the result — and the MLP is
+          decisively worse.</p>
+        <div class="figures">
+          <div class="fig"><span class="v">0.763</span><span class="l">counts+physchem structure (vs 0.757 ECFP)</span></div>
+          <div class="fig bad"><span class="v">0.725</span><span class="l">raw + L1 sparse head — worse</span></div>
+          <div class="fig bad"><span class="v">0.680</span><span class="l">multitask MLP fusion (vs 0.766 logistic)</span></div>
+          <div class="fig win"><span class="v">survives</span><span class="l">GE benefit holds, still SR-tilted</span></div>
+        </div>
+        <p class="why"><b>Why it all points one way.</b> A richer representation lifts structure just +0.006
+          (inside the CI); L1 on 2066 raw features is <em>worse</em>, because N=177 can't estimate that many
+          sparse coefficients; and the MLP — small and heavily regularized — still loses on every arm, overfitting
+          generic variance. Tellingly the MLP's SR-specificity collapses (SR +0.060 ≈ NR +0.057): the linear head
+          isn't just stronger here, it's the one that keeps the <em>mechanism legible</em>. <b>N is the ceiling,
+          not the encoder or the head</b> — which points the lever back at data comparability and the rat→human layer.</p>
       </article>
     </div>
 
@@ -609,14 +642,62 @@ logFC · 31k probes <span class="op">──►</span> <span class="ex">PCA·100<
   </div>
 </section>
 
+<!-- ============ NEXT STEP ============ -->
+<section>
+  <div class="wrap">
+    <div class="shead"><span class="n">06</span><h2>The next step — a rat→human translation layer</h2>
+      <span class="lede">The project didn't just fail to close the gap — it <em>localised</em> it to one
+        addressable step, and shipped the socket to plug the fix into.</span></div>
+    <div class="col">
+      <p style="color:var(--muted);margin:0 0 .4rem">Every experiment converged on one diagnosis: the ceiling is
+        <b style="color:var(--ink)">comparability across biological systems, not data volume</b> — we measured it at
+        <span class="mono" style="color:var(--purple-ink)">r ≈ 0.44</span> even for same-species, same-organ,
+        same-molecule rat signatures. The animal→human gap is the same harmonisation problem, one system out. So the
+        highest-leverage next move is a <em>learned</em> rat→human alignment, not more animal data.</p>
+      <div class="nextgrid">
+        <div class="tier">
+          <div class="tnum">Tier 1</div><div class="tname">Linear alignment</div>
+          <div class="tcost">weeks · public data</div>
+          <p>Learn a linear rat→human map from an anchor set of compounds measured in <em>both</em> species
+            (Open TG-GATEs human hepatocytes, LINCS L1000), over 1:1 orthologs. CORAL / optimal transport.</p>
+        </div>
+        <div class="tier">
+          <div class="tnum">Tier 2</div><div class="tname">Contrastive encoder</div>
+          <div class="tcost">a GPU-month</div>
+          <p>Project rat and human signatures into a shared latent where the same compound's responses are
+            neighbours and a species discriminator can't separate them. Where <span class="mono">r ≈ 0.44</span>
+            could actually be pushed.</p>
+        </div>
+        <div class="tier">
+          <div class="tnum">Tier 3</div><div class="tname">Pathway translation</div>
+          <div class="tcost">the ambitious version</div>
+          <p>Align at Reactome / MSigDB pathway activity, not raw genes — platform-robust, interpretable, and tied
+            to the SR hypothesis: conserved stress pathways translate; species-divergent metabolism may not.</p>
+        </div>
+      </div>
+      <div class="predict">
+        <div class="eyebrow">The falsifiable prediction that makes it fundable</div>
+        <p>If the animal→human gap is truly <b>harmonisation</b>, a translation layer should lift the human-DILI
+          <b>expression</b> arm from its current chance-level <span class="mono">0.52</span> toward structure's
+          <span class="mono">0.70</span> — and help SR mechanisms more than NR, mirroring the in-rat result. If it
+          <em>doesn't</em> move 0.52, the gap is deeper than harmonisation — itself a publishable negative.</p>
+      </div>
+      <p style="margin-top:1.1rem;color:var(--muted)">The <code>embed()</code> interface is already swappable
+        (a <span class="mono">RatToHumanEmbedder</span> stub with the identical contract) — the model drops in with
+        zero change to the CV harness or fusion. "Funded" buys anchor-set curation and encoder compute, not another
+        animal study.</p>
+    </div>
+  </div>
+</section>
+
 <!-- ============ LIMITATIONS ============ -->
 <section>
   <div class="wrap">
-    <div class="shead"><span class="n">06</span><h2>Honest limitations</h2>
+    <div class="shead"><span class="n">07</span><h2>Honest limitations</h2>
       <span class="lede">Stated plainly, because the checks that surface them are the point.</span></div>
     <div class="lims">
-      <div class="lim"><b>Small N.</b><p>177 compounds (256 pooled); sparse assays like NR-PPARγ have 12–16 actives and wide intervals.</p></div>
-      <div class="lim"><b>Baseline below SOTA.</b><p>ECFP+logistic (and weaker frozen ChemBERT) sit under published DILI models (0.75–0.83); a fine-tuned transformer is the open follow-up.</p></div>
+      <div class="lim"><b>Small N is the binding constraint.</b><p>177 compounds (256 pooled); sparse assays like NR-PPARγ have 12 actives. Richer features, an L1 head, GBM and a multitask MLP all failed to beat the regularized linear model at this N.</p></div>
+      <div class="lim"><b>Baseline below SOTA.</b><p>ECFP+logistic (stronger than frozen ChemBERT and counts+physchem here) still sits under published DILI models (0.75–0.83); a <em>fine-tuned</em> transformer is the open follow-up.</p></div>
       <div class="lim"><b>Tox21 is a prior, not truth.</b><p>Human in-vitro assays are a mechanism prior — we predict them, not the rat's own histopathology.</p></div>
       <div class="lim"><b>Imbalanced, noisy clinical labels.</b><p>DILIrank overlap is ~82% positive; the withdrawal label mixes reasons and has only 35 positives.</p></div>
     </div>

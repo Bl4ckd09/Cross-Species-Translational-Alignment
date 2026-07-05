@@ -1,0 +1,11 @@
+MULTITASK MLP  (N=177 DrugMatrix liver, 10x5 CV)
+trunk=64->32  dropout=0.4  wd=0.001  early-stop patience=25
+
+MACRO ROC-AUC:
+  structure_only   0.622
+  expr_only        0.593
+  fusion           0.680
+
+reference — per-assay LOGISTIC (same features):  structure 0.757  expr 0.679  fusion 0.766
+
+GE-adds delta (fusion - structure):  macro=+0.058  SR=+0.060  NR=+0.057

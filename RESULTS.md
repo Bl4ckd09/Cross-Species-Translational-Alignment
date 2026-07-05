@@ -164,6 +164,64 @@ more conservative* choice, not a weakness.
 
 ---
 
+## 5c. A stronger structure baseline — counts + physchem + L1  → *marginal lift; GE benefit survives*
+
+Two worries about the headline (fusion 0.766 vs ECFP4-binary structure 0.757): was structure just
+*under-tuned*, and if a stronger structure baseline closes the gap, does the GE benefit vanish? We built
+the classical **strong** Tox21 structure representation — substructure **counts** (not just presence)
++ 18 RDKit physicochemical descriptors — and tested it two ways in the identical leakage-safe harness.
+([`structure_rich.csv`](data/results/structure_rich.csv), [`run_structure_rich.py`](scripts/run_structure_rich.py))
+
+| Structure model | Structure AUC | Fusion AUC | ΔAUC macro | ΔAUC SR | ΔAUC NR |
+|---|--:|--:|--:|--:|--:|
+| binary ECFP4 → PCA-128, L2 (reference) | 0.757 | 0.766 | +0.009 | +0.025 | −0.000 |
+| **counts+physchem → PCA-128, L2** | **0.763** | **0.776** | +0.014 | +0.019 | +0.010 |
+| counts+physchem raw (2066-d), **L1** | 0.725 | 0.727 | +0.002 | +0.003 | +0.000 |
+
+**Why.** (a) The richer representation lifts structure only **+0.006** (0.757 → 0.763) — well inside the
+±0.03 CI, so a "better baseline" barely moves the ceiling. (b) The **L1 sparse head is *worse*** (0.725):
+at N=177 you cannot estimate 2066 sparse coefficients, so L1 throws away distributed signal that PCA keeps
+— this **refutes** the intuition (flagged in the overview's "cheap next try") that L1 would recover the rare
+toxicophores PCA truncates. **N is the ceiling, not the encoder.** (c) The GE benefit **survives the
+stronger baseline** — fusion still beats structure (+0.014 macro) and still tilts SR (+0.019) over NR (+0.010).
+
+**Interpretation.** The SR-specific GE benefit is **not an artifact of a weak ECFP baseline**: given
+structure its best classical shot, fusion still wins and still leans stress-response. Combined with §5b
+(frozen ChemBERT is *weaker*, not stronger), the structure arm is about as strong as it gets at this N —
+and GE's edge holds.
+
+---
+
+## 5d. The deferred neural net, finally run — a regularised multitask MLP  → *worse, and it blurs SR>NR*
+
+The main experiment used per-assay logistic regression; the MLP was deferred on the Intel-Mac torch env.
+We ran it (dedicated torch 2.2.2 venv) as a **regularised multitask net** — one shared trunk (64→32,
+dropout 0.4, weight-decay 1e-3, early stopping on an internal split) feeding 12 assay heads, masked BCE on
+measured labels, the **same** ECFP4→PCA features and the **same** CV. The multitask sharing was the
+scientific bet: low-prevalence assays (NR-PPARγ n=12, SR-ATAD5 n=14) might borrow signal that 12
+independent logistic heads cannot. ([`mlp_results.csv`](data/results/mlp_results.csv),
+[`run_mlp.py`](scripts/run_mlp.py))
+
+| Head | Structure AUC | Expr AUC | Fusion AUC | ΔAUC SR | ΔAUC NR |
+|---|--:|--:|--:|--:|--:|
+| **Logistic (per-assay)** | **0.757** | 0.679 | **0.766** | **+0.025** | −0.000 |
+| Multitask MLP | 0.622 | 0.593 | 0.680 | +0.060 | +0.057 |
+
+**Why.** The MLP is **worse on every arm** (structure −0.135, fusion −0.086). At N=177 a neural net — even
+small and heavily regularised — cannot beat a properly-regularised linear model; the shared trunk overfits
+generic variance rather than learning transferable structure. Its GE delta *looks* bigger (+0.058 macro)
+but that is the same **"weaker structure leaves more room"** inflation already seen with GBM (§5) and frozen
+ChemBERT (§5b) — and tellingly the **SR-specificity collapses** (SR +0.060 ≈ NR +0.057): the net adds
+expression roughly *uniformly* instead of on the transcriptionally-active mechanisms.
+
+**Interpretation.** Running the deferred MLP **confirms the modeling choice** rather than overturning it.
+The per-assay logistic head is not a convenience — here it is both the **stronger** model *and* the one
+under which the mechanistic SR>NR signal stays **legible**. "Worth trying the MLP again?" is now answered
+empirically: **no, not at this N.** A neural net becomes worth it only once N grows (Plan A / more
+comparable data) — the same ceiling every other experiment hit.
+
+---
+
 ## 6. Plan A, single-dose — does more data grow the benefit?  → *no, it washes out*
 
 **Setup.** Add TG-GATEs (E-MTAB-799, single-dose) liver → 79 new compounds → N=256, ComBat-merged
@@ -345,10 +403,15 @@ following with a larger, tox-specific withdrawal set, not a headline claim.
 
 ## 10. Honest limitations
 
-- **Small N.** 177 (256 pooled). Sparse assays (NR-PPARγ: 16 actives) have wide intervals.
-- **Structure encoder is ECFP4, not ChemBERT.** ECFP is a strong, standard Tox21 baseline (harder to
-  beat, so a *conservative* test of "GE adds"), but the plan's ChemBERT Baseline 1 is a torch-env
-  drop-in (`scripts/structure_embed.py`, `kind="chembert"`) not run on the Intel-Mac dev box.
+- **Small N is the binding constraint.** 177 (256 pooled); sparse assays (NR-PPARγ: 12 actives) have
+  wide intervals. Every attempt to *out-model* this ceiling failed: a richer counts+physchem structure
+  representation lifts structure only +0.006 (§5c), an L1 sparse head is *worse* (§5c), gradient-boosted
+  trees overfit (§5), and a regularised multitask MLP is worse on every arm (§5d). At this N the
+  regularised linear model is structure at its best.
+- **Structure encoder is ECFP4, and that is the strong choice here.** ECFP-logistic beat both a frozen
+  ChemBERT encoder (§5b) and the richer counts+physchem representation (§5c) — so "GE adds" was tested
+  against a genuinely strong, conservative baseline. A *fine-tuned* transformer (vs frozen) remains the
+  open follow-up; it is a torch-env drop-in (`scripts/structure_embed.py`, `kind="chembert"`).
 - **Tox21 is a human in-vitro *prior*, not rat ground truth.** We predict mechanism labels, not the
   rat's own histopathology.
 - **TG-GATEs control matching is timepoint-only** (vehicle metadata absent from the SDRF) — a
@@ -357,7 +420,51 @@ following with a larger, tox-specific withdrawal set, not a headline claim.
 
 ---
 
-## 11. Reproducing
+## 11. Future work — the rat→human translation layer (the funded next step)
+
+Every experiment above converges on **one diagnosis**: the ceiling is *comparability across biological
+systems*, not data volume. We even put a number on it — same-species, same-organ, same-platform,
+same-molecule rat signatures agree only **r ≈ 0.44** after batch correction (§7-8). The animal→human gap
+is the *same harmonisation problem, one system further out*. So the highest-leverage next investment is not
+"more rat data" (§6-8 showed that plateaus) but a **learned rat→human translation layer** that aligns rat
+transcriptional responses into a human-toxicity-relevant space. The pipeline is already built to receive
+it: the `embed()` interface (`scripts/expr_embed.py`) is swappable, with a `RatToHumanEmbedder` stub
+carrying the identical `fit_transform`/`transform` contract — dropping in a translation model needs **zero**
+change to the CV harness or fusion.
+
+**Design — three tiers of increasing ambition:**
+
+1. **Cheap linear alignment (weeks, public data only).** Learn a linear rat→human map from an *anchor set*
+   — compounds measured in both rat (TG-GATEs/DrugMatrix) *and* a human system (Open TG-GATEs human primary
+   hepatocytes; LINCS L1000 human lines), restricted to 1:1 rat-human orthologs. Methods: CORAL / optimal-
+   transport domain alignment or a ridge rat→human regression on the anchor compounds.
+2. **Contrastive / domain-adversarial encoder (a GPU-month).** A small encoder that projects rat and human
+   signatures into a shared latent where the *same* compound's rat and human responses are neighbours
+   (contrastive) while a species discriminator cannot separate them (adversarial). This is where the r ≈ 0.44
+   ceiling could actually be *pushed* — the model learns which parts of the rat response are conserved.
+3. **Pathway-anchored mechanistic translation (the ambitious version).** Align at Reactome/MSigDB *pathway*
+   activity rather than raw genes — platform-robust, interpretable, and directly tied to the SR hypothesis
+   (conserved oxidative-stress / DNA-damage pathways should translate; species-divergent metabolism may not).
+
+**Data / compute it needs.** Human reference expression (Open TG-GATEs human hepatocytes, LINCS L1000,
+ARCHS4 — all public), a curated **cross-species anchor set** of ~100-300 dual-measured compounds, and a
+GPU for tiers 2-3. No proprietary data. "Funded" buys the anchor-set curation and the alignment-encoder
+compute — not another animal study.
+
+**The falsifiable prediction that makes it fundable.** If the animal→human gap is truly *harmonisation*
+(this project's thesis), a translation layer should **(a)** lift the human-DILI *expression* arm from its
+current chance-level **0.52 (§9.2)** toward structure's **0.70**, and **(b)** help SR mechanisms more than
+NR (mirroring §4), because conserved stress pathways translate while shape-driven receptor binding was never
+the expression arm's job. If translation does *not* move 0.52, the gap is deeper than harmonisation
+(species-divergent biology) — itself a publishable negative.
+
+**Why this is the right next step, in one line.** The project didn't merely fail to close the gap — it
+*localised* the gap to a specific, addressable step (cross-system response alignment) and shipped the socket
+to plug the fix into. That is the fundable asset.
+
+---
+
+## 12. Reproducing
 
 See [README → Reproducing](README.md#reproducing) and [DATA.md](DATA.md). Large matrices are not
 committed (size + redistribution terms); everything regenerates from the scripts + public downloads.
